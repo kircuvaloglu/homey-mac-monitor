@@ -1,0 +1,35 @@
+{
+  "id": "com.kircuvaloglu.macmonitor",
+  "version": "1.0.0",
+  "compatibility": ">=12.1.0",
+  "sdk": 3,
+  "platforms": [
+    "local"
+  ],
+  "name": {
+    "en": "Mac Monitor"
+  },
+  "description": {
+    "en": "Monitor and control your Macs from Homey: temperatures, load, memory, disk space, fan speed and power, with Flows to sleep, wake, lock, notify, restart or shut down."
+  },
+  "category": [
+    "tools"
+  ],
+  "brandColor": "#38D6E0",
+  "permissions": [],
+  "images": {
+    "small": "/assets/images/small.png",
+    "large": "/assets/images/large.png",
+    "xlarge": "/assets/images/xlarge.png"
+  },
+  "author": {
+    "name": "Guray Kircuvaloglu",
+    "email": "kircuvaloglu@me.com"
+  },
+  "homepage": "https://github.com/kircuvaloglu/homey-mac-monitor",
+  "support": "https://github.com/kircuvaloglu/homey-mac-monitor/issues",
+  "source": "https://github.com/kircuvaloglu/homey-mac-monitor",
+  "bugs": {
+    "url": "https://github.com/kircuvaloglu/homey-mac-monitor/issues"
+  }
+}

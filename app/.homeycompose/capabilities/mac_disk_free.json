@@ -1,0 +1,16 @@
+{
+  "type": "number",
+  "title": {
+    "en": "Free disk space"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "insights": true,
+  "units": {
+    "en": "GB"
+  },
+  "min": 0,
+  "decimals": 1,
+  "icon": "/assets/capabilities/disk.svg"
+}

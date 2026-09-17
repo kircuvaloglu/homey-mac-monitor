@@ -1,0 +1,141 @@
+<style>
+  .wrap { padding: 4px 2px 20px; font: inherit; }
+  .hint { color: #7c8598; font-size: 13px; line-height: 1.45; margin: 0 0 18px; }
+  .hint a { color: #1a9aa3; white-space: nowrap; }
+  .found { margin-bottom: 18px; }
+  .found h4 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em;
+              color: #7c8598; margin: 0 0 8px; }
+  .mac { display: flex; justify-content: space-between; align-items: center;
+         width: 100%; padding: 11px 14px; margin-bottom: 6px; cursor: pointer;
+         border: 1px solid #dfe3ea; border-radius: 10px; background: #fff;
+         font-size: 14px; text-align: left; }
+  .mac:hover { border-color: #38d6e0; background: #f6fdfe; }
+  .mac span { color: #8a92a3; font-size: 12px; }
+  label { display: block; font-size: 13px; font-weight: 600; margin: 0 0 5px; }
+  input { width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 14px;
+          border: 1px solid #dfe3ea; border-radius: 10px; background: #fff; }
+  input:focus { outline: none; border-color: #38d6e0; }
+  .row { display: flex; gap: 10px; margin-bottom: 14px; }
+  .row > div:first-child { flex: 1 1 auto; }
+  .row > div:last-child { flex: 0 0 90px; }
+  .field { margin-bottom: 14px; }
+  button.go { width: 100%; padding: 12px; border: 0; border-radius: 10px; cursor: pointer;
+              background: #38d6e0; color: #05343a; font-size: 15px; font-weight: 600; }
+  button.go:disabled { opacity: .55; cursor: default; }
+  .msg { margin-top: 14px; padding: 11px 13px; border-radius: 10px; font-size: 13px;
+         line-height: 1.45; display: none; }
+  .msg.err { display: block; background: #fdecec; color: #8c2b2b; }
+  .msg.ok  { display: block; background: #eafaf1; color: #1d6b42; }
+</style>
+
+<div class="wrap">
+  <p class="hint"><span id="intro"></span> <a href="#" id="guide"></a></p>
+
+  <div class="found" id="found" style="display:none">
+    <h4 id="foundTitle"></h4>
+    <div id="foundList"></div>
+  </div>
+
+  <div class="row">
+    <div>
+      <label for="host" id="lblHost"></label>
+      <input id="host" type="text" placeholder="192.168.1.50" autocomplete="off" spellcheck="false">
+    </div>
+    <div>
+      <label for="port" id="lblPort"></label>
+      <input id="port" type="number" value="8787">
+    </div>
+  </div>
+
+  <div class="field">
+    <label for="token" id="lblToken"></label>
+    <input id="token" type="text" placeholder="a1b2c3..." autocomplete="off" spellcheck="false">
+  </div>
+
+  <button class="go" id="go"></button>
+  <div class="msg" id="msg"></div>
+</div>
+
+<script>
+// Homey injects this view with jQuery and runs it again when the view is shown
+// a second time, so keep everything out of the global scope.
+(function () {
+  const $ = (id) => document.getElementById(id);
+
+  function t(key, fallback) {
+    try {
+      const v = Homey.__(key);
+      return (v && v !== key) ? v : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  }
+
+  function show(kind, text) {
+    const m = $('msg');
+    m.className = 'msg ' + kind;
+    m.textContent = text;
+  }
+
+  function renderDiscovered(list) {
+    if (!list || !list.length) return;
+    $('found').style.display = 'block';
+    const box = $('foundList');
+    box.innerHTML = '';
+    list.forEach((d) => {
+      const b = document.createElement('button');
+      b.className = 'mac';
+      b.innerHTML = '<strong></strong><span></span>';
+      b.querySelector('strong').textContent = d.name || d.host;
+      b.querySelector('span').textContent = d.host + ':' + d.port;
+      b.onclick = () => {
+        $('host').value = d.host;
+        $('port').value = d.port;
+        $('token').focus();
+      };
+      box.appendChild(b);
+    });
+  }
+
+  async function connect() {
+    const payload = {
+      host: $('host').value.trim(),
+      port: parseInt($('port').value, 10) || 8787,
+      token: $('token').value.trim(),
+    };
+    $('go').disabled = true;
+    show('ok', t('pair.checking', 'Connecting...'));
+
+    let result;
+    try {
+      result = (await Homey.emit('connect', payload)) || {};
+    } catch (err) {
+      show('err', (err && err.message) || String(err));
+      return;
+    } finally {
+      $('go').disabled = false;
+    }
+
+    show('ok', [result.name, result.model, result.os].filter(Boolean).join(' · '));
+    // The repair flow has no next view.
+    setTimeout(() => (result.repaired ? Homey.done() : Homey.nextView()), 700);
+  }
+
+  $('intro').textContent = t('pair.intro',
+    'Install the Mac Monitor agent on your Mac first. The installer prints the access token you enter below.');
+  $('guide').textContent = t('pair.guide', 'Installation guide');
+  $('guide').onclick = (e) => {
+    e.preventDefault();
+    Homey.popup('https://github.com/kircuvaloglu/homey-mac-monitor#1-install-the-agent-on-your-mac');
+  };
+  $('foundTitle').textContent = t('pair.found', 'Found on your network');
+  $('lblHost').textContent = t('pair.host', 'Address');
+  $('lblPort').textContent = t('pair.port', 'Port');
+  $('lblToken').textContent = t('pair.token', 'Token');
+  $('go').textContent = t('pair.connect', 'Connect');
+  $('go').onclick = connect;
+  $('token').addEventListener('keydown', (e) => { if (e.key === 'Enter') connect(); });
+
+  Homey.emit('discovered', null).then(renderDiscovered).catch(() => {});
+})();
+</script>

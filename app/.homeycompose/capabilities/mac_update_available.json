@@ -1,0 +1,23 @@
+{
+  "type": "boolean",
+  "title": {
+    "en": "Update available"
+  },
+  "titleTrue": {
+    "en": "Update available"
+  },
+  "titleFalse": {
+    "en": "Up to date"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "insights": true,
+  "insightsTitleTrue": {
+    "en": "Update became available"
+  },
+  "insightsTitleFalse": {
+    "en": "System up to date"
+  },
+  "icon": "/assets/capabilities/update.svg"
+}

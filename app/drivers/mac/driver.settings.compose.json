@@ -1,0 +1,154 @@
+[
+  {
+    "type": "group",
+    "label": {
+      "en": "Connection"
+    },
+    "children": [
+      {
+        "id": "host",
+        "type": "text",
+        "label": {
+          "en": "Address"
+        },
+        "value": "",
+        "hint": {
+          "en": "IP address or hostname of the Mac running the agent."
+        }
+      },
+      {
+        "id": "port",
+        "type": "number",
+        "label": {
+          "en": "Port"
+        },
+        "value": 8787,
+        "min": 1,
+        "max": 65535
+      },
+      {
+        "id": "pollInterval",
+        "type": "number",
+        "label": {
+          "en": "Refresh interval (seconds)"
+        },
+        "value": 30,
+        "min": 10,
+        "max": 3600,
+        "hint": {
+          "en": "How often Homey asks the Mac for new readings."
+        }
+      }
+    ]
+  },
+  {
+    "type": "group",
+    "label": {
+      "en": "Actions"
+    },
+    "children": [
+      {
+        "id": "allow_power_actions",
+        "type": "checkbox",
+        "label": {
+          "en": "Allow restart and shut down"
+        },
+        "value": false,
+        "hint": {
+          "en": "Lets Flows restart or shut down this Mac. Restart and shutdown must also be enabled in the agent's config.json on the Mac."
+        }
+      },
+      {
+        "id": "wol_mac",
+        "type": "text",
+        "label": {
+          "en": "Wake-on-LAN MAC address"
+        },
+        "value": "",
+        "hint": {
+          "en": "Leave empty to use the address detected on the network interface Homey connects to."
+        }
+      }
+    ]
+  },
+  {
+    "type": "group",
+    "label": {
+      "en": "System information"
+    },
+    "children": [
+      {
+        "id": "info_model",
+        "type": "label",
+        "value": "-",
+        "label": {
+          "en": "Model"
+        }
+      },
+      {
+        "id": "info_serial",
+        "type": "label",
+        "value": "-",
+        "label": {
+          "en": "Serial number"
+        }
+      },
+      {
+        "id": "info_os",
+        "type": "label",
+        "value": "-",
+        "label": {
+          "en": "macOS version"
+        }
+      },
+      {
+        "id": "info_cpu",
+        "type": "label",
+        "value": "-",
+        "label": {
+          "en": "Processor"
+        }
+      },
+      {
+        "id": "info_memory",
+        "type": "label",
+        "value": "-",
+        "label": {
+          "en": "Memory"
+        }
+      },
+      {
+        "id": "info_ip",
+        "type": "label",
+        "value": "-",
+        "label": {
+          "en": "IP address"
+        }
+      },
+      {
+        "id": "info_mac",
+        "type": "label",
+        "value": "-",
+        "label": {
+          "en": "MAC address"
+        }
+      },
+      {
+        "id": "info_bootedAt",
+        "type": "label",
+        "value": "-",
+        "label": {
+          "en": "Booted at"
+        }
+      },
+      {
+        "id": "info_updates",
+        "type": "label",
+        "value": "-",
+        "label": {
+          "en": "Pending updates"
+        }
+      }
+    ]
+  }
+]

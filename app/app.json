@@ -1,0 +1,1251 @@
+{
+  "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
+  "id": "com.kircuvaloglu.macmonitor",
+  "version": "1.0.0",
+  "compatibility": ">=12.1.0",
+  "sdk": 3,
+  "platforms": [
+    "local"
+  ],
+  "name": {
+    "en": "Mac Monitor"
+  },
+  "description": {
+    "en": "Monitor and control your Macs from Homey: temperatures, load, memory, disk space, fan speed and power, with Flows to sleep, wake, lock, notify, restart or shut down."
+  },
+  "category": [
+    "tools"
+  ],
+  "brandColor": "#38D6E0",
+  "permissions": [],
+  "images": {
+    "small": "/assets/images/small.png",
+    "large": "/assets/images/large.png",
+    "xlarge": "/assets/images/xlarge.png"
+  },
+  "author": {
+    "name": "Guray Kircuvaloglu",
+    "email": "kircuvaloglu@me.com"
+  },
+  "homepage": "https://github.com/kircuvaloglu/homey-mac-monitor",
+  "support": "https://github.com/kircuvaloglu/homey-mac-monitor/issues",
+  "source": "https://github.com/kircuvaloglu/homey-mac-monitor",
+  "bugs": {
+    "url": "https://github.com/kircuvaloglu/homey-mac-monitor/issues"
+  },
+  "flow": {
+    "triggers": [
+      {
+        "id": "cpu_usage_above",
+        "title": {
+          "en": "CPU usage rises above..."
+        },
+        "titleFormatted": {
+          "en": "CPU usage rises above [[percent]] %"
+        },
+        "hint": {
+          "en": "Fires once each time the usage crosses the threshold upwards."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          },
+          {
+            "name": "percent",
+            "type": "number",
+            "min": 1,
+            "max": 100,
+            "step": 1,
+            "title": {
+              "en": "Usage"
+            },
+            "placeholder": {
+              "en": "80"
+            }
+          }
+        ],
+        "tokens": [
+          {
+            "name": "percent",
+            "type": "number",
+            "title": {
+              "en": "CPU usage (%)"
+            },
+            "example": 86.5
+          }
+        ]
+      },
+      {
+        "id": "cpu_usage_below",
+        "title": {
+          "en": "CPU usage drops below..."
+        },
+        "titleFormatted": {
+          "en": "CPU usage drops below [[percent]] %"
+        },
+        "hint": {
+          "en": "Fires once each time the usage crosses the threshold downwards."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          },
+          {
+            "name": "percent",
+            "type": "number",
+            "min": 1,
+            "max": 100,
+            "step": 1,
+            "title": {
+              "en": "Usage"
+            },
+            "placeholder": {
+              "en": "20"
+            }
+          }
+        ],
+        "tokens": [
+          {
+            "name": "percent",
+            "type": "number",
+            "title": {
+              "en": "CPU usage (%)"
+            },
+            "example": 12.4
+          }
+        ]
+      },
+      {
+        "id": "memory_above",
+        "title": {
+          "en": "Memory usage rises above..."
+        },
+        "titleFormatted": {
+          "en": "Memory usage rises above [[percent]] %"
+        },
+        "hint": {
+          "en": "Fires once each time the usage crosses the threshold upwards."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          },
+          {
+            "name": "percent",
+            "type": "number",
+            "min": 10,
+            "max": 100,
+            "step": 1,
+            "title": {
+              "en": "Usage"
+            },
+            "placeholder": {
+              "en": "90"
+            }
+          }
+        ],
+        "tokens": [
+          {
+            "name": "percent",
+            "type": "number",
+            "title": {
+              "en": "Usage (%)"
+            },
+            "example": 92.5
+          }
+        ]
+      },
+      {
+        "id": "memory_below",
+        "title": {
+          "en": "Memory usage drops below..."
+        },
+        "titleFormatted": {
+          "en": "Memory usage drops below [[percent]] %"
+        },
+        "hint": {
+          "en": "Fires once each time the usage crosses the threshold downwards."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          },
+          {
+            "name": "percent",
+            "type": "number",
+            "min": 10,
+            "max": 100,
+            "step": 1,
+            "title": {
+              "en": "Usage"
+            },
+            "placeholder": {
+              "en": "80"
+            }
+          }
+        ],
+        "tokens": [
+          {
+            "name": "percent",
+            "type": "number",
+            "title": {
+              "en": "Usage (%)"
+            },
+            "example": 64.2
+          }
+        ]
+      },
+      {
+        "id": "disk_free_below",
+        "title": {
+          "en": "Free disk space drops below..."
+        },
+        "titleFormatted": {
+          "en": "Free disk space drops below [[gigabytes]] GB"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          },
+          {
+            "name": "gigabytes",
+            "type": "number",
+            "min": 1,
+            "max": 4000,
+            "step": 1,
+            "title": {
+              "en": "Free space"
+            },
+            "placeholder": {
+              "en": "25"
+            }
+          }
+        ],
+        "tokens": [
+          {
+            "name": "free",
+            "type": "number",
+            "title": {
+              "en": "Free space (GB)"
+            },
+            "example": 12.5
+          }
+        ]
+      },
+      {
+        "id": "disk_free_above",
+        "title": {
+          "en": "Free disk space rises above..."
+        },
+        "titleFormatted": {
+          "en": "Free disk space rises above [[gigabytes]] GB"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          },
+          {
+            "name": "gigabytes",
+            "type": "number",
+            "min": 1,
+            "max": 4000,
+            "step": 1,
+            "title": {
+              "en": "Free space"
+            },
+            "placeholder": {
+              "en": "50"
+            }
+          }
+        ],
+        "tokens": [
+          {
+            "name": "free",
+            "type": "number",
+            "title": {
+              "en": "Free space (GB)"
+            },
+            "example": 64.1
+          }
+        ]
+      },
+      {
+        "id": "fan_above",
+        "title": {
+          "en": "Fan speed rises above..."
+        },
+        "titleFormatted": {
+          "en": "Fan speed rises above [[rpm]] RPM"
+        },
+        "hint": {
+          "en": "Only available on Macs with a fan."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          },
+          {
+            "name": "rpm",
+            "type": "number",
+            "min": 100,
+            "max": 10000,
+            "step": 100,
+            "title": {
+              "en": "Speed"
+            },
+            "placeholder": {
+              "en": "3000"
+            }
+          }
+        ],
+        "tokens": [
+          {
+            "name": "rpm",
+            "type": "number",
+            "title": {
+              "en": "Fan speed (RPM)"
+            },
+            "example": 3200
+          }
+        ]
+      },
+      {
+        "id": "updates_found",
+        "title": {
+          "en": "A macOS update becomes available"
+        },
+        "tokens": [
+          {
+            "name": "count",
+            "type": "number",
+            "title": {
+              "en": "Number of updates"
+            },
+            "example": 2
+          },
+          {
+            "name": "names",
+            "type": "string",
+            "title": {
+              "en": "Updates"
+            },
+            "example": "macOS 26.1, Safari 26.1"
+          }
+        ],
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "rebooted",
+        "title": {
+          "en": "The Mac has restarted"
+        },
+        "hint": {
+          "en": "Detected when the uptime resets."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "went_offline",
+        "title": {
+          "en": "The Mac becomes unreachable"
+        },
+        "hint": {
+          "en": "Also fires when the Mac goes to sleep or is shut down."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "came_online",
+        "title": {
+          "en": "The Mac becomes reachable again"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      }
+    ],
+    "conditions": [
+      {
+        "id": "is_online",
+        "title": {
+          "en": "The Mac !{{is|is not}} reachable"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "cpu_temp_greater",
+        "title": {
+          "en": "CPU temperature !{{is|is not}} above..."
+        },
+        "titleFormatted": {
+          "en": "CPU temperature !{{is|is not}} above [[celsius]] °C"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          },
+          {
+            "name": "celsius",
+            "type": "number",
+            "min": 30,
+            "max": 110,
+            "step": 1,
+            "title": {
+              "en": "Temperature"
+            },
+            "placeholder": {
+              "en": "80"
+            }
+          }
+        ]
+      },
+      {
+        "id": "cpu_usage_greater",
+        "title": {
+          "en": "CPU usage !{{is|is not}} above..."
+        },
+        "titleFormatted": {
+          "en": "CPU usage !{{is|is not}} above [[percent]] %"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          },
+          {
+            "name": "percent",
+            "type": "number",
+            "min": 1,
+            "max": 100,
+            "step": 1,
+            "title": {
+              "en": "Usage"
+            },
+            "placeholder": {
+              "en": "80"
+            }
+          }
+        ]
+      },
+      {
+        "id": "memory_greater",
+        "title": {
+          "en": "Memory usage !{{is|is not}} above..."
+        },
+        "titleFormatted": {
+          "en": "Memory usage !{{is|is not}} above [[percent]] %"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          },
+          {
+            "name": "percent",
+            "type": "number",
+            "min": 10,
+            "max": 100,
+            "step": 1,
+            "title": {
+              "en": "Usage"
+            },
+            "placeholder": {
+              "en": "90"
+            }
+          }
+        ]
+      },
+      {
+        "id": "disk_free_greater",
+        "title": {
+          "en": "Free disk space !{{is|is not}} above..."
+        },
+        "titleFormatted": {
+          "en": "Free disk space !{{is|is not}} above [[gigabytes]] GB"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          },
+          {
+            "name": "gigabytes",
+            "type": "number",
+            "min": 1,
+            "max": 4000,
+            "step": 1,
+            "title": {
+              "en": "Free space"
+            },
+            "placeholder": {
+              "en": "25"
+            }
+          }
+        ]
+      },
+      {
+        "id": "fan_greater",
+        "title": {
+          "en": "Fan speed !{{is|is not}} above..."
+        },
+        "titleFormatted": {
+          "en": "Fan speed !{{is|is not}} above [[rpm]] RPM"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          },
+          {
+            "name": "rpm",
+            "type": "number",
+            "min": 100,
+            "max": 10000,
+            "step": 100,
+            "title": {
+              "en": "Speed"
+            },
+            "placeholder": {
+              "en": "3000"
+            }
+          }
+        ]
+      },
+      {
+        "id": "power_greater",
+        "title": {
+          "en": "Power draw !{{is|is not}} above..."
+        },
+        "titleFormatted": {
+          "en": "Power draw !{{is|is not}} above [[watts]] W"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          },
+          {
+            "name": "watts",
+            "type": "number",
+            "min": 1,
+            "max": 1000,
+            "step": 1,
+            "title": {
+              "en": "Power"
+            },
+            "placeholder": {
+              "en": "30"
+            }
+          }
+        ]
+      },
+      {
+        "id": "has_updates",
+        "title": {
+          "en": "A macOS update !{{is|is not}} available"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "id": "sleep",
+        "title": {
+          "en": "Put the Mac to sleep"
+        },
+        "hint": {
+          "en": "The Mac becomes unreachable until it wakes up."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "wake",
+        "title": {
+          "en": "Wake the Mac"
+        },
+        "hint": {
+          "en": "Sends a Wake-on-LAN packet. Works for a sleeping Mac with \"Wake for network access\" turned on, not for a Mac that is shut down."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "display_sleep",
+        "title": {
+          "en": "Turn off the display"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "lock",
+        "title": {
+          "en": "Lock the screen"
+        },
+        "hint": {
+          "en": "Starts the screen saver. The Mac locks when a password is required right after the screen saver starts. Needs a logged-in user."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "notify",
+        "title": {
+          "en": "Show a notification on the Mac"
+        },
+        "titleFormatted": {
+          "en": "Show notification [[title]]: [[message]]"
+        },
+        "hint": {
+          "en": "Needs a logged-in user."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          },
+          {
+            "name": "title",
+            "type": "text",
+            "title": {
+              "en": "Title"
+            },
+            "placeholder": {
+              "en": "Homey"
+            }
+          },
+          {
+            "name": "message",
+            "type": "text",
+            "title": {
+              "en": "Message"
+            },
+            "placeholder": {
+              "en": "The washing machine is done"
+            }
+          }
+        ]
+      },
+      {
+        "id": "run_command",
+        "title": {
+          "en": "Run a command on the Mac"
+        },
+        "titleFormatted": {
+          "en": "Run command [[command]]"
+        },
+        "hint": {
+          "en": "Commands are defined in the agent's config.json on the Mac. The output is available as a token."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          },
+          {
+            "name": "command",
+            "type": "autocomplete",
+            "title": {
+              "en": "Command"
+            },
+            "placeholder": {
+              "en": "Select a command"
+            }
+          }
+        ],
+        "tokens": [
+          {
+            "name": "output",
+            "type": "string",
+            "title": {
+              "en": "Output"
+            },
+            "example": "Backup finished"
+          }
+        ]
+      },
+      {
+        "id": "refresh",
+        "title": {
+          "en": "Refresh the readings"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "check_updates",
+        "title": {
+          "en": "Check for macOS updates"
+        },
+        "hint": {
+          "en": "Takes up to a minute. Fires the update trigger when a new update is found."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "restart",
+        "title": {
+          "en": "Restart the Mac"
+        },
+        "hint": {
+          "en": "Must be allowed in the device settings and in the agent's config.json."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "shutdown",
+        "title": {
+          "en": "Shut down the Mac"
+        },
+        "hint": {
+          "en": "Must be allowed in the device settings and in the agent's config.json. A Mac that is shut down cannot be started from Homey."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      }
+    ]
+  },
+  "drivers": [
+    {
+      "name": {
+        "en": "Mac"
+      },
+      "class": "sensor",
+      "capabilities": [
+        "measure_temperature.cpu",
+        "measure_temperature.gpu",
+        "mac_cpu_usage",
+        "mac_cpu_load",
+        "mac_memory_usage",
+        "mac_disk_free",
+        "mac_disk_usage",
+        "mac_fan_rpm",
+        "measure_power",
+        "mac_uptime",
+        "mac_updates",
+        "mac_update_available",
+        "alarm_heat"
+      ],
+      "capabilitiesOptions": {
+        "measure_temperature.cpu": {
+          "title": {
+            "en": "CPU temperature"
+          },
+          "insights": true,
+          "decimals": 1
+        },
+        "measure_temperature.gpu": {
+          "title": {
+            "en": "GPU temperature"
+          },
+          "insights": true,
+          "decimals": 1
+        },
+        "measure_power": {
+          "title": {
+            "en": "Power draw"
+          },
+          "insights": true,
+          "decimals": 1
+        },
+        "alarm_heat": {
+          "title": {
+            "en": "Thermal throttling"
+          }
+        }
+      },
+      "platforms": [
+        "local"
+      ],
+      "connectivity": [
+        "lan"
+      ],
+      "discovery": "mac_agent",
+      "images": {
+        "small": "/drivers/mac/assets/images/small.png",
+        "large": "/drivers/mac/assets/images/large.png",
+        "xlarge": "/drivers/mac/assets/images/xlarge.png"
+      },
+      "pair": [
+        {
+          "id": "start",
+          "navigation": {
+            "next": "list_devices"
+          }
+        },
+        {
+          "id": "list_devices",
+          "template": "list_devices",
+          "navigation": {
+            "next": "add_devices"
+          }
+        },
+        {
+          "id": "add_devices",
+          "template": "add_devices"
+        }
+      ],
+      "repair": [
+        {
+          "id": "start"
+        }
+      ],
+      "id": "mac",
+      "settings": [
+        {
+          "type": "group",
+          "label": {
+            "en": "Connection"
+          },
+          "children": [
+            {
+              "id": "host",
+              "type": "text",
+              "label": {
+                "en": "Address"
+              },
+              "value": "",
+              "hint": {
+                "en": "IP address or hostname of the Mac running the agent."
+              }
+            },
+            {
+              "id": "port",
+              "type": "number",
+              "label": {
+                "en": "Port"
+              },
+              "value": 8787,
+              "min": 1,
+              "max": 65535
+            },
+            {
+              "id": "pollInterval",
+              "type": "number",
+              "label": {
+                "en": "Refresh interval (seconds)"
+              },
+              "value": 30,
+              "min": 10,
+              "max": 3600,
+              "hint": {
+                "en": "How often Homey asks the Mac for new readings."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Actions"
+          },
+          "children": [
+            {
+              "id": "allow_power_actions",
+              "type": "checkbox",
+              "label": {
+                "en": "Allow restart and shut down"
+              },
+              "value": false,
+              "hint": {
+                "en": "Lets Flows restart or shut down this Mac. Restart and shutdown must also be enabled in the agent's config.json on the Mac."
+              }
+            },
+            {
+              "id": "wol_mac",
+              "type": "text",
+              "label": {
+                "en": "Wake-on-LAN MAC address"
+              },
+              "value": "",
+              "hint": {
+                "en": "Leave empty to use the address detected on the network interface Homey connects to."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "System information"
+          },
+          "children": [
+            {
+              "id": "info_model",
+              "type": "label",
+              "value": "-",
+              "label": {
+                "en": "Model"
+              }
+            },
+            {
+              "id": "info_serial",
+              "type": "label",
+              "value": "-",
+              "label": {
+                "en": "Serial number"
+              }
+            },
+            {
+              "id": "info_os",
+              "type": "label",
+              "value": "-",
+              "label": {
+                "en": "macOS version"
+              }
+            },
+            {
+              "id": "info_cpu",
+              "type": "label",
+              "value": "-",
+              "label": {
+                "en": "Processor"
+              }
+            },
+            {
+              "id": "info_memory",
+              "type": "label",
+              "value": "-",
+              "label": {
+                "en": "Memory"
+              }
+            },
+            {
+              "id": "info_ip",
+              "type": "label",
+              "value": "-",
+              "label": {
+                "en": "IP address"
+              }
+            },
+            {
+              "id": "info_mac",
+              "type": "label",
+              "value": "-",
+              "label": {
+                "en": "MAC address"
+              }
+            },
+            {
+              "id": "info_bootedAt",
+              "type": "label",
+              "value": "-",
+              "label": {
+                "en": "Booted at"
+              }
+            },
+            {
+              "id": "info_updates",
+              "type": "label",
+              "value": "-",
+              "label": {
+                "en": "Pending updates"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "widgets": {
+    "macs": {
+      "name": {
+        "en": "Macs"
+      },
+      "height": 340,
+      "transparent": false,
+      "settings": [
+        {
+          "id": "refreshSeconds",
+          "type": "number",
+          "title": {
+            "en": "Refresh interval (seconds)"
+          },
+          "value": 20,
+          "min": 5,
+          "max": 300
+        },
+        {
+          "id": "showFooter",
+          "type": "checkbox",
+          "title": {
+            "en": "Show power and uptime"
+          },
+          "value": true
+        }
+      ],
+      "api": {
+        "getMacs": {
+          "method": "GET",
+          "path": "/"
+        },
+        "refreshMac": {
+          "method": "POST",
+          "path": "/refresh"
+        }
+      },
+      "id": "macs"
+    }
+  },
+  "capabilities": {
+    "mac_cpu_load": {
+      "type": "number",
+      "title": {
+        "en": "CPU load per core"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": true,
+      "min": 0,
+      "max": 16,
+      "decimals": 2,
+      "icon": "/assets/capabilities/cpu.svg"
+    },
+    "mac_cpu_usage": {
+      "type": "number",
+      "title": {
+        "en": "CPU usage"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": true,
+      "units": {
+        "en": "%"
+      },
+      "min": 0,
+      "max": 100,
+      "decimals": 1,
+      "icon": "/assets/capabilities/cpu.svg"
+    },
+    "mac_disk_free": {
+      "type": "number",
+      "title": {
+        "en": "Free disk space"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": true,
+      "units": {
+        "en": "GB"
+      },
+      "min": 0,
+      "decimals": 1,
+      "icon": "/assets/capabilities/disk.svg"
+    },
+    "mac_disk_usage": {
+      "type": "number",
+      "title": {
+        "en": "Disk usage"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": true,
+      "units": {
+        "en": "%"
+      },
+      "min": 0,
+      "max": 100,
+      "decimals": 1,
+      "icon": "/assets/capabilities/disk.svg"
+    },
+    "mac_fan_rpm": {
+      "type": "number",
+      "title": {
+        "en": "Fan speed"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": true,
+      "units": {
+        "en": "RPM"
+      },
+      "min": 0,
+      "max": 10000,
+      "decimals": 0,
+      "icon": "/assets/capabilities/fan.svg"
+    },
+    "mac_memory_usage": {
+      "type": "number",
+      "title": {
+        "en": "Memory usage"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": true,
+      "units": {
+        "en": "%"
+      },
+      "min": 0,
+      "max": 100,
+      "decimals": 1,
+      "icon": "/assets/capabilities/memory.svg"
+    },
+    "mac_update_available": {
+      "type": "boolean",
+      "title": {
+        "en": "Update available"
+      },
+      "titleTrue": {
+        "en": "Update available"
+      },
+      "titleFalse": {
+        "en": "Up to date"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": true,
+      "insightsTitleTrue": {
+        "en": "Update became available"
+      },
+      "insightsTitleFalse": {
+        "en": "System up to date"
+      },
+      "icon": "/assets/capabilities/update.svg"
+    },
+    "mac_updates": {
+      "type": "number",
+      "title": {
+        "en": "Pending updates"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": false,
+      "units": {
+        "en": "x"
+      },
+      "min": 0,
+      "max": 99,
+      "decimals": 0,
+      "icon": "/assets/capabilities/update.svg"
+    },
+    "mac_uptime": {
+      "type": "string",
+      "title": {
+        "en": "Uptime"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": false,
+      "icon": "/assets/capabilities/clock.svg"
+    }
+  },
+  "discovery": {
+    "mac_agent": {
+      "type": "mdns-sd",
+      "mdns-sd": {
+        "protocol": "tcp",
+        "name": "homeymac"
+      },
+      "id": "{{txt.id}}"
+    }
+  }
+}

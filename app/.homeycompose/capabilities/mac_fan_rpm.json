@@ -1,0 +1,17 @@
+{
+  "type": "number",
+  "title": {
+    "en": "Fan speed"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "insights": true,
+  "units": {
+    "en": "RPM"
+  },
+  "min": 0,
+  "max": 10000,
+  "decimals": 0,
+  "icon": "/assets/capabilities/fan.svg"
+}

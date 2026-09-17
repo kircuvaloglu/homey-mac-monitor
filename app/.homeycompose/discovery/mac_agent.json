@@ -1,0 +1,8 @@
+{
+  "type": "mdns-sd",
+  "mdns-sd": {
+    "protocol": "tcp",
+    "name": "homeymac"
+  },
+  "id": "{{txt.id}}"
+}

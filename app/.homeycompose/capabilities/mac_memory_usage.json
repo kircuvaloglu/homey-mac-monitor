@@ -1,0 +1,17 @@
+{
+  "type": "number",
+  "title": {
+    "en": "Memory usage"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "insights": true,
+  "units": {
+    "en": "%"
+  },
+  "min": 0,
+  "max": 100,
+  "decimals": 1,
+  "icon": "/assets/capabilities/memory.svg"
+}

@@ -1,0 +1,17 @@
+{
+  "type": "number",
+  "title": {
+    "en": "Pending updates"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "insights": false,
+  "units": {
+    "en": "x"
+  },
+  "min": 0,
+  "max": 99,
+  "decimals": 0,
+  "icon": "/assets/capabilities/update.svg"
+}

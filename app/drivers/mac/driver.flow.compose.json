@@ -1,0 +1,599 @@
+{
+  "triggers": [
+    {
+      "id": "cpu_usage_above",
+      "title": {
+        "en": "CPU usage rises above..."
+      },
+      "titleFormatted": {
+        "en": "CPU usage rises above [[percent]] %"
+      },
+      "hint": {
+        "en": "Fires once each time the usage crosses the threshold upwards."
+      },
+      "args": [
+        {
+          "name": "percent",
+          "type": "number",
+          "min": 1,
+          "max": 100,
+          "step": 1,
+          "title": {
+            "en": "Usage"
+          },
+          "placeholder": {
+            "en": "80"
+          }
+        }
+      ],
+      "tokens": [
+        {
+          "name": "percent",
+          "type": "number",
+          "title": {
+            "en": "CPU usage (%)"
+          },
+          "example": 86.5
+        }
+      ]
+    },
+    {
+      "id": "cpu_usage_below",
+      "title": {
+        "en": "CPU usage drops below..."
+      },
+      "titleFormatted": {
+        "en": "CPU usage drops below [[percent]] %"
+      },
+      "hint": {
+        "en": "Fires once each time the usage crosses the threshold downwards."
+      },
+      "args": [
+        {
+          "name": "percent",
+          "type": "number",
+          "min": 1,
+          "max": 100,
+          "step": 1,
+          "title": {
+            "en": "Usage"
+          },
+          "placeholder": {
+            "en": "20"
+          }
+        }
+      ],
+      "tokens": [
+        {
+          "name": "percent",
+          "type": "number",
+          "title": {
+            "en": "CPU usage (%)"
+          },
+          "example": 12.4
+        }
+      ]
+    },
+    {
+      "id": "memory_above",
+      "title": {
+        "en": "Memory usage rises above..."
+      },
+      "titleFormatted": {
+        "en": "Memory usage rises above [[percent]] %"
+      },
+      "hint": {
+        "en": "Fires once each time the usage crosses the threshold upwards."
+      },
+      "args": [
+        {
+          "name": "percent",
+          "type": "number",
+          "min": 10,
+          "max": 100,
+          "step": 1,
+          "title": {
+            "en": "Usage"
+          },
+          "placeholder": {
+            "en": "90"
+          }
+        }
+      ],
+      "tokens": [
+        {
+          "name": "percent",
+          "type": "number",
+          "title": {
+            "en": "Usage (%)"
+          },
+          "example": 92.5
+        }
+      ]
+    },
+    {
+      "id": "memory_below",
+      "title": {
+        "en": "Memory usage drops below..."
+      },
+      "titleFormatted": {
+        "en": "Memory usage drops below [[percent]] %"
+      },
+      "hint": {
+        "en": "Fires once each time the usage crosses the threshold downwards."
+      },
+      "args": [
+        {
+          "name": "percent",
+          "type": "number",
+          "min": 10,
+          "max": 100,
+          "step": 1,
+          "title": {
+            "en": "Usage"
+          },
+          "placeholder": {
+            "en": "80"
+          }
+        }
+      ],
+      "tokens": [
+        {
+          "name": "percent",
+          "type": "number",
+          "title": {
+            "en": "Usage (%)"
+          },
+          "example": 64.2
+        }
+      ]
+    },
+    {
+      "id": "disk_free_below",
+      "title": {
+        "en": "Free disk space drops below..."
+      },
+      "titleFormatted": {
+        "en": "Free disk space drops below [[gigabytes]] GB"
+      },
+      "args": [
+        {
+          "name": "gigabytes",
+          "type": "number",
+          "min": 1,
+          "max": 4000,
+          "step": 1,
+          "title": {
+            "en": "Free space"
+          },
+          "placeholder": {
+            "en": "25"
+          }
+        }
+      ],
+      "tokens": [
+        {
+          "name": "free",
+          "type": "number",
+          "title": {
+            "en": "Free space (GB)"
+          },
+          "example": 12.5
+        }
+      ]
+    },
+    {
+      "id": "disk_free_above",
+      "title": {
+        "en": "Free disk space rises above..."
+      },
+      "titleFormatted": {
+        "en": "Free disk space rises above [[gigabytes]] GB"
+      },
+      "args": [
+        {
+          "name": "gigabytes",
+          "type": "number",
+          "min": 1,
+          "max": 4000,
+          "step": 1,
+          "title": {
+            "en": "Free space"
+          },
+          "placeholder": {
+            "en": "50"
+          }
+        }
+      ],
+      "tokens": [
+        {
+          "name": "free",
+          "type": "number",
+          "title": {
+            "en": "Free space (GB)"
+          },
+          "example": 64.1
+        }
+      ]
+    },
+    {
+      "id": "fan_above",
+      "title": {
+        "en": "Fan speed rises above..."
+      },
+      "titleFormatted": {
+        "en": "Fan speed rises above [[rpm]] RPM"
+      },
+      "hint": {
+        "en": "Only available on Macs with a fan."
+      },
+      "args": [
+        {
+          "name": "rpm",
+          "type": "number",
+          "min": 100,
+          "max": 10000,
+          "step": 100,
+          "title": {
+            "en": "Speed"
+          },
+          "placeholder": {
+            "en": "3000"
+          }
+        }
+      ],
+      "tokens": [
+        {
+          "name": "rpm",
+          "type": "number",
+          "title": {
+            "en": "Fan speed (RPM)"
+          },
+          "example": 3200
+        }
+      ]
+    },
+    {
+      "id": "updates_found",
+      "title": {
+        "en": "A macOS update becomes available"
+      },
+      "tokens": [
+        {
+          "name": "count",
+          "type": "number",
+          "title": {
+            "en": "Number of updates"
+          },
+          "example": 2
+        },
+        {
+          "name": "names",
+          "type": "string",
+          "title": {
+            "en": "Updates"
+          },
+          "example": "macOS 26.1, Safari 26.1"
+        }
+      ]
+    },
+    {
+      "id": "rebooted",
+      "title": {
+        "en": "The Mac has restarted"
+      },
+      "hint": {
+        "en": "Detected when the uptime resets."
+      }
+    },
+    {
+      "id": "went_offline",
+      "title": {
+        "en": "The Mac becomes unreachable"
+      },
+      "hint": {
+        "en": "Also fires when the Mac goes to sleep or is shut down."
+      }
+    },
+    {
+      "id": "came_online",
+      "title": {
+        "en": "The Mac becomes reachable again"
+      }
+    }
+  ],
+  "conditions": [
+    {
+      "id": "is_online",
+      "title": {
+        "en": "The Mac !{{is|is not}} reachable"
+      }
+    },
+    {
+      "id": "cpu_temp_greater",
+      "title": {
+        "en": "CPU temperature !{{is|is not}} above..."
+      },
+      "titleFormatted": {
+        "en": "CPU temperature !{{is|is not}} above [[celsius]] °C"
+      },
+      "args": [
+        {
+          "name": "celsius",
+          "type": "number",
+          "min": 30,
+          "max": 110,
+          "step": 1,
+          "title": {
+            "en": "Temperature"
+          },
+          "placeholder": {
+            "en": "80"
+          }
+        }
+      ]
+    },
+    {
+      "id": "cpu_usage_greater",
+      "title": {
+        "en": "CPU usage !{{is|is not}} above..."
+      },
+      "titleFormatted": {
+        "en": "CPU usage !{{is|is not}} above [[percent]] %"
+      },
+      "args": [
+        {
+          "name": "percent",
+          "type": "number",
+          "min": 1,
+          "max": 100,
+          "step": 1,
+          "title": {
+            "en": "Usage"
+          },
+          "placeholder": {
+            "en": "80"
+          }
+        }
+      ]
+    },
+    {
+      "id": "memory_greater",
+      "title": {
+        "en": "Memory usage !{{is|is not}} above..."
+      },
+      "titleFormatted": {
+        "en": "Memory usage !{{is|is not}} above [[percent]] %"
+      },
+      "args": [
+        {
+          "name": "percent",
+          "type": "number",
+          "min": 10,
+          "max": 100,
+          "step": 1,
+          "title": {
+            "en": "Usage"
+          },
+          "placeholder": {
+            "en": "90"
+          }
+        }
+      ]
+    },
+    {
+      "id": "disk_free_greater",
+      "title": {
+        "en": "Free disk space !{{is|is not}} above..."
+      },
+      "titleFormatted": {
+        "en": "Free disk space !{{is|is not}} above [[gigabytes]] GB"
+      },
+      "args": [
+        {
+          "name": "gigabytes",
+          "type": "number",
+          "min": 1,
+          "max": 4000,
+          "step": 1,
+          "title": {
+            "en": "Free space"
+          },
+          "placeholder": {
+            "en": "25"
+          }
+        }
+      ]
+    },
+    {
+      "id": "fan_greater",
+      "title": {
+        "en": "Fan speed !{{is|is not}} above..."
+      },
+      "titleFormatted": {
+        "en": "Fan speed !{{is|is not}} above [[rpm]] RPM"
+      },
+      "args": [
+        {
+          "name": "rpm",
+          "type": "number",
+          "min": 100,
+          "max": 10000,
+          "step": 100,
+          "title": {
+            "en": "Speed"
+          },
+          "placeholder": {
+            "en": "3000"
+          }
+        }
+      ]
+    },
+    {
+      "id": "power_greater",
+      "title": {
+        "en": "Power draw !{{is|is not}} above..."
+      },
+      "titleFormatted": {
+        "en": "Power draw !{{is|is not}} above [[watts]] W"
+      },
+      "args": [
+        {
+          "name": "watts",
+          "type": "number",
+          "min": 1,
+          "max": 1000,
+          "step": 1,
+          "title": {
+            "en": "Power"
+          },
+          "placeholder": {
+            "en": "30"
+          }
+        }
+      ]
+    },
+    {
+      "id": "has_updates",
+      "title": {
+        "en": "A macOS update !{{is|is not}} available"
+      }
+    }
+  ],
+  "actions": [
+    {
+      "id": "sleep",
+      "title": {
+        "en": "Put the Mac to sleep"
+      },
+      "hint": {
+        "en": "The Mac becomes unreachable until it wakes up."
+      }
+    },
+    {
+      "id": "wake",
+      "title": {
+        "en": "Wake the Mac"
+      },
+      "hint": {
+        "en": "Sends a Wake-on-LAN packet. Works for a sleeping Mac with \"Wake for network access\" turned on, not for a Mac that is shut down."
+      }
+    },
+    {
+      "id": "display_sleep",
+      "title": {
+        "en": "Turn off the display"
+      }
+    },
+    {
+      "id": "lock",
+      "title": {
+        "en": "Lock the screen"
+      },
+      "hint": {
+        "en": "Starts the screen saver. The Mac locks when a password is required right after the screen saver starts. Needs a logged-in user."
+      }
+    },
+    {
+      "id": "notify",
+      "title": {
+        "en": "Show a notification on the Mac"
+      },
+      "titleFormatted": {
+        "en": "Show notification [[title]]: [[message]]"
+      },
+      "hint": {
+        "en": "Needs a logged-in user."
+      },
+      "args": [
+        {
+          "name": "title",
+          "type": "text",
+          "title": {
+            "en": "Title"
+          },
+          "placeholder": {
+            "en": "Homey"
+          }
+        },
+        {
+          "name": "message",
+          "type": "text",
+          "title": {
+            "en": "Message"
+          },
+          "placeholder": {
+            "en": "The washing machine is done"
+          }
+        }
+      ]
+    },
+    {
+      "id": "run_command",
+      "title": {
+        "en": "Run a command on the Mac"
+      },
+      "titleFormatted": {
+        "en": "Run command [[command]]"
+      },
+      "hint": {
+        "en": "Commands are defined in the agent's config.json on the Mac. The output is available as a token."
+      },
+      "args": [
+        {
+          "name": "command",
+          "type": "autocomplete",
+          "title": {
+            "en": "Command"
+          },
+          "placeholder": {
+            "en": "Select a command"
+          }
+        }
+      ],
+      "tokens": [
+        {
+          "name": "output",
+          "type": "string",
+          "title": {
+            "en": "Output"
+          },
+          "example": "Backup finished"
+        }
+      ]
+    },
+    {
+      "id": "refresh",
+      "title": {
+        "en": "Refresh the readings"
+      }
+    },
+    {
+      "id": "check_updates",
+      "title": {
+        "en": "Check for macOS updates"
+      },
+      "hint": {
+        "en": "Takes up to a minute. Fires the update trigger when a new update is found."
+      }
+    },
+    {
+      "id": "restart",
+      "title": {
+        "en": "Restart the Mac"
+      },
+      "hint": {
+        "en": "Must be allowed in the device settings and in the agent's config.json."
+      }
+    },
+    {
+      "id": "shutdown",
+      "title": {
+        "en": "Shut down the Mac"
+      },
+      "hint": {
+        "en": "Must be allowed in the device settings and in the agent's config.json. A Mac that is shut down cannot be started from Homey."
+      }
+    }
+  ]
+}

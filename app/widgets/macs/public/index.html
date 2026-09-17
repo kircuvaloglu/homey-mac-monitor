@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  :root {
+    --ink: var(--homey-text-color, #16181d);
+    --ink-2: var(--homey-text-color-light, #6b7482);
+    --tile: #f4f6f9;
+    --tile-line: #e3e7ec;
+    --track: #e1e5ea;
+    --button: #eceff3;
+    --purple: #7c6cf2;
+    --blue: #3d9bf0;
+    --green: #35b374;
+    --amber: #e0962b;
+    --red: #e0573f;
+    --purple-tint: rgba(124, 108, 242, 0.14);
+    --blue-tint: rgba(61, 155, 240, 0.14);
+    --green-tint: rgba(53, 179, 116, 0.14);
+    --amber-tint: rgba(224, 150, 43, 0.14);
+  }
+  .homey-dark-mode {
+    --ink: var(--homey-text-color, #eef2f6);
+    --ink-2: var(--homey-text-color-light, #9aa5b1);
+    --tile: #1a1f23;
+    --tile-line: #2d343a;
+    --track: #2b3238;
+    --button: #242a2f;
+    --purple: #8b7cff;
+    --blue: #4aa8ff;
+    --green: #4cc98a;
+    --amber: #f2b457;
+    --red: #f07a63;
+    --purple-tint: rgba(139, 124, 255, 0.2);
+    --blue-tint: rgba(74, 168, 255, 0.2);
+    --green-tint: rgba(76, 201, 138, 0.2);
+    --amber-tint: rgba(242, 180, 87, 0.2);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { color: var(--ink); font-size: 14px; line-height: 1.3; }
+
+  .mac + .mac { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--tile-line); }
+
+  .head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .head-text { flex: 1 1 auto; min-width: 0; }
+  .name { font-size: 20px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .status { display: flex; align-items: center; gap: 6px; margin-top: 3px; color: var(--ink-2); font-size: 14px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--green); flex: 0 0 auto; }
+  .offline .dot { background: var(--red); }
+  .refresh { flex: 0 0 auto; width: 40px; height: 40px; border: 0; border-radius: 10px;
+             background: var(--button); color: var(--ink); display: flex; align-items: center;
+             justify-content: center; cursor: pointer; padding: 0; }
+  .refresh svg { width: 20px; height: 20px; }
+  .refresh.busy svg { animation: spin 0.9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .tile { background: var(--tile); border: 1px solid var(--tile-line); border-radius: 12px;
+          padding: 12px; min-width: 0; }
+  .tile.wide { grid-column: 1 / -1; }
+  .offline .tile { opacity: 0.55; }
+  .row { display: flex; align-items: center; gap: 10px; }
+  .icon { flex: 0 0 auto; width: 38px; height: 38px; border-radius: 10px; display: flex;
+          align-items: center; justify-content: center; }
+  .icon svg { width: 22px; height: 22px; }
+  .value { font-size: 24px; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .value .unit { font-size: 15px; margin-left: 2px; }
+  .value.long { font-size: 20px; }
+  .value.long .unit { font-size: 13px; }
+  .label { color: var(--ink-2); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .label .extra { margin-left: 6px; }
+  .bar { height: 6px; border-radius: 3px; background: var(--track); margin-top: 12px; overflow: hidden; }
+  .fill { height: 100%; border-radius: 3px; min-width: 6px; }
+  .warn .value { color: var(--amber); }
+  .crit .value { color: var(--red); }
+
+  .foot { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; color: var(--ink-2); font-size: 13px; }
+  .badge { padding: 1px 8px; border-radius: 99px; border: 1px solid currentColor; }
+  .badge.warn { color: var(--amber); }
+  .badge.crit { color: var(--red); }
+
+  .empty { padding: 32px 8px; text-align: center; color: var(--ink-2); }
+</style>
+</head>
+
+<body class="homey-widget">
+  <div id="list"></div>
+
+<script type="text/javascript">
+  var settings = { refreshSeconds: 20, showFooter: true };
+  var HomeyRef = null;
+  var isReady = false;
+
+  var ICONS = {
+    cpu: '<rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/>' +
+         '<path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/>',
+    memory: '<rect x="2" y="7" width="20" height="10" rx="2"/><path d="M6 11v2M10 11v2M14 11v2M18 11v2M5 17v2M19 17v2"/>',
+    temperature: '<path d="M14 14.8V5a2 2 0 0 0-4 0v9.8a4 4 0 1 0 4 0z"/><path d="M12 11v6"/>',
+    fan: '<circle cx="12" cy="12" r="2"/><path d="M12 10c0-4 1-7 4-7 2 0 2.5 3 0 5l-2.3 2.6"/>' +
+         '<path d="M14 12c4 0 7 1 7 4 0 2-3 2.5-5 0l-2.6-2.3"/><path d="M12 14c0 4-1 7-4 7-2 0-2.5-3 0-5l2.3-2.6"/>' +
+         '<path d="M10 12c-4 0-7-1-7-4 0-2 3-2.5 5 0l2.6 2.3"/>',
+    power: '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
+    storage: '<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
+    refresh: '<path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/>'
+  };
+
+  function svg(name) {
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+           'stroke-linecap="round" stroke-linejoin="round">' + ICONS[name] + '</svg>';
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function isNum(v) {
+    return typeof v === 'number' && isFinite(v);
+  }
+
+  function clamp(v) {
+    return Math.max(0, Math.min(100, v));
+  }
+
+  function time(ms) {
+    if (!ms) return '';
+    return new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  // color: palette name (purple, blue, green, amber); percent: bar fill, or null for no bar
+  function tile(o) {
+    var tone = o.tone ? ' ' + o.tone : '';
+    var wide = o.wide ? ' wide' : '';
+    var bar = '';
+    if (o.percent !== null && o.percent !== undefined) {
+      bar = '<div class="bar"><div class="fill" style="width:' + clamp(o.percent).toFixed(1) + '%;background:' +
+            (o.barFill || 'var(--' + o.color + ')') + '"></div></div>';
+    }
+    var extra = o.extra ? '<span class="extra">· ' + esc(o.extra) + '</span>' : '';
+    return '<div class="tile' + tone + wide + '">' +
+             '<div class="row">' +
+               '<div class="icon" style="color:var(--' + o.color + ');background:var(--' + o.color + '-tint)">' +
+                 svg(o.icon) + '</div>' +
+               '<div style="min-width:0">' +
+                 '<div class="value' + (String(o.value).length + (o.unit || '').length > 7 ? ' long' : '') + '">' + esc(o.value) + (o.unit ? '<span class="unit">' + esc(o.unit) + '</span>' : '') + '</div>' +
+                 '<div class="label">' + esc(o.label) + extra + '</div>' +
+               '</div>' +
+             '</div>' + bar +
+           '</div>';
+  }
+
+  function renderMac(mac) {
+    var tiles = [];
+
+    if (isNum(mac.usage)) {
+      tiles.push(tile({ icon: 'cpu', color: 'purple', value: Math.round(mac.usage), unit: '%',
+                        label: 'CPU', percent: mac.usage }));
+    }
+    if (isNum(mac.memory)) {
+      tiles.push(tile({ icon: 'memory', color: 'blue', value: Math.round(mac.memory), unit: '%',
+                        label: 'Memory', percent: mac.memory }));
+    }
+    if (isNum(mac.temperature)) {
+      var t = mac.temperature;
+      tiles.push(tile({ icon: 'temperature', color: 'green', value: t.toFixed(0), unit: ' °C',
+                        label: 'Temperature', tone: t >= 90 ? 'crit' : (t >= 80 ? 'warn' : ''),
+                        // 20 °C to 100 °C mapped onto the bar
+                        percent: (t - 20) / 0.8,
+                        barFill: 'linear-gradient(90deg, #38d6e0, #4cc98a 45%, #f2b457 75%, #f07a63)' }));
+    }
+    if (isNum(mac.fanRpm)) {
+      // Mac mini fans top out around 5000 RPM.
+      tiles.push(tile({ icon: 'fan', color: 'blue', value: Math.round(mac.fanRpm), unit: ' RPM',
+                        label: 'Fan', percent: mac.fanRpm / 50 }));
+    } else if (isNum(mac.power)) {
+      tiles.push(tile({ icon: 'power', color: 'amber', value: mac.power.toFixed(1), unit: ' W',
+                        label: 'Power', percent: null }));
+    }
+    if (isNum(mac.diskUsage) || isNum(mac.diskFree)) {
+      var free = mac.diskFree;
+      var tone = isNum(free) ? (free < 10 ? 'crit' : (free < 25 ? 'warn' : '')) : '';
+      tiles.push(tile({ icon: 'storage', color: 'green', wide: true, tone: tone,
+                        value: isNum(mac.diskUsage) ? Math.round(mac.diskUsage) : '–', unit: '%',
+                        label: 'Storage', extra: isNum(free) ? free.toFixed(1) + ' GB free' : '',
+                        percent: isNum(mac.diskUsage) ? mac.diskUsage : null,
+                        barFill: tone === 'crit' ? 'var(--red)' : (tone === 'warn' ? 'var(--amber)' : 'var(--green)') }));
+    }
+
+    var foot = '';
+    if (settings.showFooter) {
+      var parts = [];
+      if (isNum(mac.power) && isNum(mac.fanRpm)) parts.push('<span>Power ' + mac.power.toFixed(1) + ' W</span>');
+      if (mac.uptime && mac.uptime !== '-') parts.push('<span>Uptime ' + esc(mac.uptime) + '</span>');
+      if (mac.throttled) parts.push('<span class="badge crit">Throttling</span>');
+      if (isNum(mac.updates) && mac.updates > 0) {
+        parts.push('<span class="badge warn">' + mac.updates + (mac.updates === 1 ? ' update' : ' updates') + '</span>');
+      }
+      if (parts.length) foot = '<div class="foot">' + parts.join('') + '</div>';
+    }
+
+    var state = mac.available ? 'Online' : 'Offline';
+    var updated = mac.lastUpdated ? '<span>· Updated ' + time(mac.lastUpdated) + '</span>' : '';
+
+    return '<div class="mac' + (mac.available ? '' : ' offline') + '" data-id="' + esc(mac.id) + '">' +
+             '<div class="head">' +
+               '<div class="head-text">' +
+                 '<div class="name">' + esc(mac.name) + '</div>' +
+                 '<div class="status"><span class="dot"></span><span>' + state + '</span>' + updated + '</div>' +
+               '</div>' +
+               '<button class="refresh" type="button" aria-label="Refresh">' + svg('refresh') + '</button>' +
+             '</div>' +
+             '<div class="grid">' + tiles.join('') + '</div>' + foot +
+           '</div>';
+  }
+
+  function fitHeight() {
+    if (!isReady) return;
+    var h = Math.ceil(document.body.getBoundingClientRect().height);
+    HomeyRef.setHeight(h).catch(function () {});
+  }
+
+  var current = [];
+
+  function render(macs) {
+    current = macs || [];
+    var list = document.getElementById('list');
+    if (!current.length) {
+      list.innerHTML = '<div class="empty">No Macs added yet.<br>Add device → Mac Monitor</div>';
+    } else {
+      list.innerHTML = current.map(renderMac).join('');
+    }
+    fitHeight();
+  }
+
+  function showError(err) {
+    document.getElementById('list').innerHTML =
+      '<div class="empty">Could not load data<br>' + esc(err && err.message ? err.message : err) + '</div>';
+    fitHeight();
+  }
+
+  function load() {
+    return HomeyRef.api('GET', '/', {})
+      .then(function (result) { render(result && result.macs); })
+      .catch(showError);
+  }
+
+  document.getElementById('list').addEventListener('click', function (e) {
+    var button = e.target.closest('.refresh');
+    if (!button || button.classList.contains('busy')) return;
+    var card = button.closest('.mac');
+    var id = card.getAttribute('data-id');
+    button.classList.add('busy');
+    HomeyRef.api('POST', '/refresh', { id: id })
+      .then(function (mac) {
+        for (var i = 0; i < current.length; i++) {
+          if (current[i].id === id) current[i] = mac;
+        }
+        render(current);
+      })
+      .catch(function () { button.classList.remove('busy'); });
+  });
+
+  function onHomeyReady(Homey) {
+    HomeyRef = Homey;
+    try {
+      var s = Homey.getSettings() || {};
+      if (typeof s.refreshSeconds === 'number') settings.refreshSeconds = s.refreshSeconds;
+      if (typeof s.showFooter === 'boolean') settings.showFooter = s.showFooter;
+    } catch (e) { /* use defaults */ }
+
+    load().then(function () {
+      Homey.ready({ height: Math.ceil(document.body.getBoundingClientRect().height) });
+      isReady = true;
+    });
+    setInterval(load, Math.max(5, settings.refreshSeconds) * 1000);
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+{
+  "name": {
+    "en": "Mac"
+  },
+  "class": "sensor",
+  "capabilities": [
+    "measure_temperature.cpu",
+    "measure_temperature.gpu",
+    "mac_cpu_usage",
+    "mac_cpu_load",
+    "mac_memory_usage",
+    "mac_disk_free",
+    "mac_disk_usage",
+    "mac_fan_rpm",
+    "measure_power",
+    "mac_uptime",
+    "mac_updates",
+    "mac_update_available",
+    "alarm_heat"
+  ],
+  "capabilitiesOptions": {
+    "measure_temperature.cpu": {
+      "title": {
+        "en": "CPU temperature"
+      },
+      "insights": true,
+      "decimals": 1
+    },
+    "measure_temperature.gpu": {
+      "title": {
+        "en": "GPU temperature"
+      },
+      "insights": true,
+      "decimals": 1
+    },
+    "measure_power": {
+      "title": {
+        "en": "Power draw"
+      },
+      "insights": true,
+      "decimals": 1
+    },
+    "alarm_heat": {
+      "title": {
+        "en": "Thermal throttling"
+      }
+    }
+  },
+  "platforms": [
+    "local"
+  ],
+  "connectivity": [
+    "lan"
+  ],
+  "discovery": "mac_agent",
+  "images": {
+    "small": "/drivers/mac/assets/images/small.png",
+    "large": "/drivers/mac/assets/images/large.png",
+    "xlarge": "/drivers/mac/assets/images/xlarge.png"
+  },
+  "pair": [
+    {
+      "id": "start",
+      "navigation": {
+        "next": "list_devices"
+      }
+    },
+    {
+      "id": "list_devices",
+      "template": "list_devices",
+      "navigation": {
+        "next": "add_devices"
+      }
+    },
+    {
+      "id": "add_devices",
+      "template": "add_devices"
+    }
+  ],
+  "repair": [
+    {
+      "id": "start"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "uptime": {
+    "d": "d",
+    "h": "h",
+    "m": "m"
+  },
+  "device": {
+    "unreachable": "The Mac is not responding. Is it asleep, or is the agent stopped?",
+    "asleep": "The Mac is asleep."
+  },
+  "pair": {
+    "intro": "Install the Mac Monitor agent on your Mac first. The installer prints the access token you enter below.",
+    "found": "Found on your network",
+    "host": "Address",
+    "port": "Port",
+    "token": "Token",
+    "connect": "Connect",
+    "checking": "Connecting...",
+    "error": {
+      "noHost": "Please enter an address.",
+      "noToken": "Please enter the token.",
+      "badToken": "The token is not accepted by that Mac.",
+      "unreachable": "Could not reach the agent: __message__"
+    },
+    "guide": "Installation guide"
+  },
+  "action": {
+    "powerNotAllowed": "Restart and shut down are not allowed for this Mac. Turn on \"Allow restart and shut down\" in the device settings.",
+    "noMacAddress": "No MAC address known for this Mac yet. Enter one in the device settings.",
+    "invalidMacAddress": "The Wake-on-LAN MAC address in the device settings is not valid.",
+    "noCommands": "No commands are defined in the agent's config.json.",
+    "failed": "The Mac could not run the action: __message__"
+  }
+}

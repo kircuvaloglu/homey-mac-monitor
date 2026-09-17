@@ -1,0 +1,5 @@
+.DS_Store
+app/.homeybuild/
+app/node_modules/
+__pycache__/
+*.log

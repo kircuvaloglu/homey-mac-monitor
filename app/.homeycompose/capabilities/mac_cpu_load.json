@@ -1,0 +1,14 @@
+{
+  "type": "number",
+  "title": {
+    "en": "CPU load per core"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "insights": true,
+  "min": 0,
+  "max": 16,
+  "decimals": 2,
+  "icon": "/assets/capabilities/cpu.svg"
+}

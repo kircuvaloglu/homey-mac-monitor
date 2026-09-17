@@ -1,0 +1,37 @@
+{
+  "name": {
+    "en": "Macs"
+  },
+  "height": 340,
+  "transparent": false,
+  "settings": [
+    {
+      "id": "refreshSeconds",
+      "type": "number",
+      "title": {
+        "en": "Refresh interval (seconds)"
+      },
+      "value": 20,
+      "min": 5,
+      "max": 300
+    },
+    {
+      "id": "showFooter",
+      "type": "checkbox",
+      "title": {
+        "en": "Show power and uptime"
+      },
+      "value": true
+    }
+  ],
+  "api": {
+    "getMacs": {
+      "method": "GET",
+      "path": "/"
+    },
+    "refreshMac": {
+      "method": "POST",
+      "path": "/refresh"
+    }
+  }
+}

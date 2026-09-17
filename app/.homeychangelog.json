@@ -1,0 +1,5 @@
+{
+  "1.0.0": {
+    "en": "First release. Live CPU and GPU temperature, CPU usage, memory, disk space, fan speed, power draw, uptime and pending macOS updates with Insights history. Flow cards to react to these values and to sleep, wake, lock, notify, run commands on, restart or shut down a Mac. Dashboard widget for all Macs."
+  }
+}
