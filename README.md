@@ -190,9 +190,18 @@ Without `--purge` the config and token are kept for a later reinstall.
 
 ## Troubleshooting
 
-- **The Mac is not found in Homey.** Enter the Mac's IP address manually. Make
-  sure the Mac and Homey are on the same network and that the macOS firewall
-  allows incoming connections for `node`.
+- **The Mac is not found in Homey.** Enter the Mac's IP address manually and
+  make sure the Mac and Homey are on the same network.
+- **The Mac stopped responding after an update.** With the macOS firewall on,
+  the installer allows incoming connections for Node.js. If Node.js was updated
+  later, run the installer again, or allow it manually:
+
+  ```bash
+  N="$(realpath "$(/usr/libexec/PlistBuddy -c 'Print :ProgramArguments:0' /Library/LaunchDaemons/com.homey.macagent.plist)")"
+  sudo /usr/libexec/ApplicationFirewall/socketfilterfw --add "$N"
+  sudo /usr/libexec/ApplicationFirewall/socketfilterfw --unblockapp "$N"
+  sudo launchctl kickstart -k system/com.homey.macagent
+  ```
 - **"The Mac is not responding".** The Mac is asleep, shut down or the agent is
   not running. Check with `curl http://127.0.0.1:8787/ping` on the Mac.
 - **No temperature or fan data.** Reinstall the agent; the log is in

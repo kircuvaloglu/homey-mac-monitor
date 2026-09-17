@@ -133,6 +133,17 @@ if [[ $loaded -ne 1 ]]; then
 fi
 launchctl kickstart -k system/"$LABEL" 2>/dev/null || true
 
+# Firewall
+# With the macOS firewall on, incoming connections to node are dropped silently
+# unless node is allowed. The rule is tied to the real binary, so resolve symlinks.
+FW=/usr/libexec/ApplicationFirewall/socketfilterfw
+if [[ -x "$FW" ]] && "$FW" --getglobalstate 2>/dev/null | grep -q "enabled"; then
+  NODE_REAL="$(/usr/bin/python3 -c 'import os,sys;print(os.path.realpath(sys.argv[1]))' "$NODE" 2>/dev/null || echo "$NODE")"
+  "$FW" --add "$NODE_REAL" >/dev/null 2>&1 || true
+  "$FW" --unblockapp "$NODE_REAL" >/dev/null 2>&1 || true
+  echo "firewall    : allowed incoming connections for $NODE_REAL"
+fi
+
 # Check
 PORT="$(/usr/bin/python3 -c 'import json;print(json.load(open("'"$CONFIG"'"))["port"])')"
 # List every address: with several networks (e.g. VLANs) the default route may not be the one Homey uses.
@@ -166,6 +177,5 @@ cat <<OUT
      "shutdown" to true in $CONFIG and run:
        sudo launchctl kickstart -k system/$LABEL
    - A "background item added" notification from macOS is expected.
-   - If the macOS firewall is on, allow incoming connections for node.
 --------------------------------------------------------------
 OUT

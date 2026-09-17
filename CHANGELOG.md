@@ -26,6 +26,7 @@
 - New `macsession` helper for the display state
 - New `GET /processes` endpoint
 - New actions: `say`, `keepawake`, `allowsleep`
+- The installer allows Node.js through the macOS firewall when it is on
 
 Install the new agent on each Mac with the same command as before; the existing
 token is kept.
