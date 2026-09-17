@@ -55,7 +55,8 @@ const getStatus = (opts) => request({ ...opts, path: '/status' });
 // softwareupdate can take a minute or more.
 const checkUpdates = (opts) => request({ ...opts, path: '/status?updates=refresh', timeout: 180000 });
 const ping = (opts) => request({ ...opts, path: '/ping', token: null, timeout: opts.timeout || 4000 });
+const getProcesses = (opts) => request({ ...opts, path: '/processes' });
 const runAction = (opts, action, params = {}) =>
   request({ ...opts, path: '/action', method: 'POST', body: { action, params }, timeout: 70000 });
 
-module.exports = { request, getStatus, checkUpdates, ping, runAction };
+module.exports = { request, getStatus, checkUpdates, getProcesses, ping, runAction };

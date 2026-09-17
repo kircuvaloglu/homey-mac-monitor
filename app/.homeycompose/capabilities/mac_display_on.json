@@ -1,0 +1,23 @@
+{
+  "type": "boolean",
+  "title": {
+    "en": "Display"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "titleTrue": {
+    "en": "On"
+  },
+  "titleFalse": {
+    "en": "Off"
+  },
+  "insights": true,
+  "insightsTitleTrue": {
+    "en": "Display turned on"
+  },
+  "insightsTitleFalse": {
+    "en": "Display turned off"
+  },
+  "icon": "/assets/capabilities/display.svg"
+}

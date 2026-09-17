@@ -17,6 +17,10 @@ function macFromDevice(device) {
     uptime: read('mac_uptime'),
     updates: read('mac_updates'),
     throttled: read('alarm_heat'),
+    down: read('mac_network_down'),
+    up: read('mac_network_up'),
+    locked: read('mac_screen_locked'),
+    idle: read('mac_idle'),
   };
 }
 

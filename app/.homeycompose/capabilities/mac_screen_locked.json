@@ -1,0 +1,23 @@
+{
+  "type": "boolean",
+  "title": {
+    "en": "Screen lock"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "titleTrue": {
+    "en": "Locked"
+  },
+  "titleFalse": {
+    "en": "Unlocked"
+  },
+  "insights": true,
+  "insightsTitleTrue": {
+    "en": "Screen locked"
+  },
+  "insightsTitleFalse": {
+    "en": "Screen unlocked"
+  },
+  "icon": "/assets/capabilities/lock.svg"
+}

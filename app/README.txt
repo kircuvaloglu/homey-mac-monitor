@@ -1,23 +1,25 @@
 Monitor and control your Macs from Homey.
 
-Mac Monitor adds your Macs to Homey as devices. It shows CPU and GPU
-temperature, CPU usage, memory, disk space, fan speed, power draw, uptime and
-pending macOS updates, and lets Flows put a Mac to sleep, wake it, lock it or
-restart it. Everything stays on your local network.
+Mac Monitor adds your Macs to Homey as devices. It shows temperatures, CPU
+usage, memory, disk space and health, fan speed, power draw, network speed,
+uptime, macOS updates and Time Machine backups. It also knows when the Mac is
+idle, when the screen is locked and when the display is off. Flows can put a Mac to sleep, wake it, keep it awake, lock it, speak
+text or restart it. Everything stays on your local network.
 
 FEATURES
 
 - Live readings with Insights history.
-- Flow triggers for CPU usage, memory, disk space, fan speed, macOS updates,
-  restarts and the Mac going offline or coming back.
-- Flow conditions for reachability, temperature, CPU usage, memory, disk space,
-  fan speed, power draw and pending updates.
-- Flow actions to sleep, wake (Wake-on-LAN), turn off the display, lock the
-  screen, show a notification, run a command, check for updates, restart and
-  shut down. Restart and shut down are off until you allow them.
+- Flow triggers for CPU, memory, disk, fan, network speed, idle time, screen
+  lock, display, memory pressure, thermal state, disk health, backups, drives,
+  macOS updates, restarts and the Mac going offline or coming back.
+- Flow conditions for reachability, temperature, usage, idle time, screen lock,
+  display, running apps, connected drives, memory pressure, backup age and
+  pending updates.
+- Flow actions to sleep, wake (Wake-on-LAN), keep awake, allow sleep, turn off
+  the display, lock the screen, show a notification, speak text, run a command,
+  check for updates, restart and shut down. Restart and shut down are off until
+  you allow them.
 - A dashboard widget with a card for every Mac.
-- Device settings with model, serial number, macOS version, processor, memory,
-  IP address, MAC address and boot time.
 
 REQUIREMENTS
 
@@ -37,6 +39,8 @@ Full guide: https://github.com/kircuvaloglu/homey-mac-monitor
 NOTES
 
 - Sensors are read only. The app never changes fan settings.
+- Display state, screen lock, notifications and speech need a user logged in
+  on the Mac.
 - The GPU sensor is only active while the GPU is in use, so
   the GPU temperature appears after the first reading and then keeps its last
   value. Fanless Macs do not show a fan speed.

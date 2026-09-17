@@ -140,6 +140,9 @@ for r in readings { byKey[r.key] = r.value }
 
 var result: [String: Any] = ["ok": !readings.isEmpty, "sensors": readings.count]
 
+// 0 nominal, 1 fair, 2 serious, 3 critical
+result["thermalState"] = ProcessInfo.processInfo.thermalState.rawValue
+
 let cpu = plausibleTemps(readings, prefixes: ["Tp", "Te"])
 if !cpu.isEmpty {
     result["cpu"] = r1(cpu.reduce(0,+) / Double(cpu.count))

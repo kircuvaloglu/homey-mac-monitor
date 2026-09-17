@@ -1,7 +1,7 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "com.kircuvaloglu.macmonitor",
-  "version": "1.0.0",
+  "version": "1.5.0",
   "compatibility": ">=12.1.0",
   "sdk": 3,
   "platforms": [
@@ -11,7 +11,7 @@
     "en": "Mac Monitor"
   },
   "description": {
-    "en": "Monitor and control your Macs from Homey: temperatures, load, memory, disk space, fan speed and power, with Flows to sleep, wake, lock, notify, restart or shut down."
+    "en": "Monitor and control your Macs from Homey: temperatures, CPU, memory, disk, network, activity and backups, with Flows to sleep, wake, lock, notify, restart or shut down."
   },
   "category": [
     "tools"
@@ -82,6 +82,14 @@
               "en": "CPU usage (%)"
             },
             "example": 86.5
+          },
+          {
+            "name": "process",
+            "type": "string",
+            "title": {
+              "en": "Busiest process"
+            },
+            "example": "Final Cut Pro"
           }
         ]
       },
@@ -406,6 +414,377 @@
             "filter": "driver_id=mac"
           }
         ]
+      },
+      {
+        "id": "idle_above",
+        "title": {
+          "en": "The Mac has been idle for..."
+        },
+        "titleFormatted": {
+          "en": "The Mac has been idle for [[minutes]] minutes"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          },
+          {
+            "name": "minutes",
+            "type": "number",
+            "min": 1,
+            "max": 1440,
+            "step": 1,
+            "title": {
+              "en": "Minutes"
+            },
+            "placeholder": {
+              "en": "10"
+            }
+          }
+        ],
+        "tokens": [
+          {
+            "name": "minutes",
+            "type": "number",
+            "title": {
+              "en": "Idle time (min)"
+            },
+            "example": 10
+          }
+        ],
+        "hint": {
+          "en": "Idle means no keyboard or mouse input."
+        }
+      },
+      {
+        "id": "user_active",
+        "title": {
+          "en": "Someone starts using the Mac again"
+        },
+        "hint": {
+          "en": "Fires when there is input after at least two idle minutes."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "screen_locked",
+        "title": {
+          "en": "The screen is locked"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "screen_unlocked",
+        "title": {
+          "en": "The screen is unlocked"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "display_on",
+        "title": {
+          "en": "The display turns on"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "display_off",
+        "title": {
+          "en": "The display turns off"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "network_down_above",
+        "title": {
+          "en": "Download speed rises above..."
+        },
+        "titleFormatted": {
+          "en": "Download speed rises above [[mbps]] Mbit/s"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          },
+          {
+            "name": "mbps",
+            "type": "number",
+            "min": 0.1,
+            "max": 10000,
+            "step": 0.1,
+            "title": {
+              "en": "Speed"
+            },
+            "placeholder": {
+              "en": "50"
+            }
+          }
+        ],
+        "tokens": [
+          {
+            "name": "mbps",
+            "type": "number",
+            "title": {
+              "en": "Download (Mbit/s)"
+            },
+            "example": 64.2
+          }
+        ]
+      },
+      {
+        "id": "network_up_above",
+        "title": {
+          "en": "Upload speed rises above..."
+        },
+        "titleFormatted": {
+          "en": "Upload speed rises above [[mbps]] Mbit/s"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          },
+          {
+            "name": "mbps",
+            "type": "number",
+            "min": 0.1,
+            "max": 10000,
+            "step": 0.1,
+            "title": {
+              "en": "Speed"
+            },
+            "placeholder": {
+              "en": "20"
+            }
+          }
+        ],
+        "tokens": [
+          {
+            "name": "mbps",
+            "type": "number",
+            "title": {
+              "en": "Upload (Mbit/s)"
+            },
+            "example": 24.8
+          }
+        ]
+      },
+      {
+        "id": "memory_pressure_changed",
+        "title": {
+          "en": "Memory pressure changes"
+        },
+        "tokens": [
+          {
+            "name": "pressure",
+            "type": "string",
+            "title": {
+              "en": "Memory pressure"
+            },
+            "example": "warning"
+          }
+        ],
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "thermal_state_changed",
+        "title": {
+          "en": "Thermal state changes"
+        },
+        "hint": {
+          "en": "The states are nominal, fair, serious and critical."
+        },
+        "tokens": [
+          {
+            "name": "state",
+            "type": "string",
+            "title": {
+              "en": "Thermal state"
+            },
+            "example": "serious"
+          }
+        ],
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "disk_failing",
+        "title": {
+          "en": "The disk reports a health problem"
+        },
+        "hint": {
+          "en": "Based on the SMART status of the internal disk."
+        },
+        "tokens": [
+          {
+            "name": "status",
+            "type": "string",
+            "title": {
+              "en": "SMART status"
+            },
+            "example": "Failing"
+          }
+        ],
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "backup_finished",
+        "title": {
+          "en": "A Time Machine backup finishes"
+        },
+        "tokens": [
+          {
+            "name": "time",
+            "type": "string",
+            "title": {
+              "en": "Backup time"
+            },
+            "example": "14:05"
+          }
+        ],
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "backup_overdue",
+        "title": {
+          "en": "No Time Machine backup for..."
+        },
+        "titleFormatted": {
+          "en": "No Time Machine backup for [[hours]] hours"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          },
+          {
+            "name": "hours",
+            "type": "number",
+            "min": 1,
+            "max": 8760,
+            "step": 1,
+            "title": {
+              "en": "Hours"
+            },
+            "placeholder": {
+              "en": "48"
+            }
+          }
+        ],
+        "tokens": [
+          {
+            "name": "hours",
+            "type": "number",
+            "title": {
+              "en": "Hours since last backup"
+            },
+            "example": 49
+          }
+        ]
+      },
+      {
+        "id": "drive_connected",
+        "title": {
+          "en": "A drive is connected"
+        },
+        "tokens": [
+          {
+            "name": "name",
+            "type": "string",
+            "title": {
+              "en": "Drive name"
+            },
+            "example": "Backup"
+          }
+        ],
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "drive_disconnected",
+        "title": {
+          "en": "A drive is disconnected"
+        },
+        "tokens": [
+          {
+            "name": "name",
+            "type": "string",
+            "title": {
+              "en": "Drive name"
+            },
+            "example": "Backup"
+          }
+        ],
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
       }
     ],
     "conditions": [
@@ -608,6 +987,185 @@
             "filter": "driver_id=mac"
           }
         ]
+      },
+      {
+        "id": "idle_longer",
+        "title": {
+          "en": "The Mac !{{has|has not}} been idle for..."
+        },
+        "titleFormatted": {
+          "en": "The Mac !{{has|has not}} been idle for [[minutes]] minutes"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          },
+          {
+            "name": "minutes",
+            "type": "number",
+            "min": 1,
+            "max": 1440,
+            "step": 1,
+            "title": {
+              "en": "Minutes"
+            },
+            "placeholder": {
+              "en": "10"
+            }
+          }
+        ]
+      },
+      {
+        "id": "screen_is_locked",
+        "title": {
+          "en": "The screen !{{is|is not}} locked"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "display_is_on",
+        "title": {
+          "en": "The display !{{is|is not}} on"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "app_running",
+        "title": {
+          "en": "An app !{{is|is not}} running"
+        },
+        "titleFormatted": {
+          "en": "[[app]] !{{is|is not}} running"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          },
+          {
+            "name": "app",
+            "type": "autocomplete",
+            "title": {
+              "en": "App"
+            },
+            "placeholder": {
+              "en": "Select an app"
+            }
+          }
+        ]
+      },
+      {
+        "id": "drive_connected",
+        "title": {
+          "en": "A drive !{{is|is not}} connected"
+        },
+        "titleFormatted": {
+          "en": "[[drive]] !{{is|is not}} connected"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          },
+          {
+            "name": "drive",
+            "type": "autocomplete",
+            "title": {
+              "en": "Drive"
+            },
+            "placeholder": {
+              "en": "Select a drive"
+            }
+          }
+        ]
+      },
+      {
+        "id": "memory_pressure_is",
+        "title": {
+          "en": "Memory pressure !{{is|is not}}..."
+        },
+        "titleFormatted": {
+          "en": "Memory pressure !{{is|is not}} [[level]]"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          },
+          {
+            "name": "level",
+            "type": "dropdown",
+            "title": {
+              "en": "Level"
+            },
+            "values": [
+              {
+                "id": "normal",
+                "title": {
+                  "en": "Normal"
+                }
+              },
+              {
+                "id": "warning",
+                "title": {
+                  "en": "Warning"
+                }
+              },
+              {
+                "id": "critical",
+                "title": {
+                  "en": "Critical"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "backup_older",
+        "title": {
+          "en": "The last backup !{{is|is not}} older than..."
+        },
+        "titleFormatted": {
+          "en": "The last backup !{{is|is not}} older than [[hours]] hours"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          },
+          {
+            "name": "hours",
+            "type": "number",
+            "min": 1,
+            "max": 8760,
+            "step": 1,
+            "title": {
+              "en": "Hours"
+            },
+            "placeholder": {
+              "en": "48"
+            }
+          }
+        ]
       }
     ],
     "actions": [
@@ -751,6 +1309,80 @@
         ]
       },
       {
+        "id": "keep_awake",
+        "title": {
+          "en": "Keep the Mac awake..."
+        },
+        "titleFormatted": {
+          "en": "Keep the Mac awake for [[minutes]] minutes"
+        },
+        "hint": {
+          "en": "Prevents sleep and display sleep until the time runs out."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          },
+          {
+            "name": "minutes",
+            "type": "number",
+            "min": 1,
+            "max": 1440,
+            "step": 1,
+            "title": {
+              "en": "Minutes"
+            },
+            "placeholder": {
+              "en": "60"
+            }
+          }
+        ]
+      },
+      {
+        "id": "allow_sleep",
+        "title": {
+          "en": "Allow the Mac to sleep again"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "say",
+        "title": {
+          "en": "Speak text on the Mac"
+        },
+        "titleFormatted": {
+          "en": "Say [[text]]"
+        },
+        "hint": {
+          "en": "Uses the Mac's voice and speakers. Needs a logged-in user."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          },
+          {
+            "name": "text",
+            "type": "text",
+            "title": {
+              "en": "Text"
+            },
+            "placeholder": {
+              "en": "Dinner is ready"
+            }
+          }
+        ]
+      },
+      {
         "id": "refresh",
         "title": {
           "en": "Refresh the readings"
@@ -832,7 +1464,17 @@
         "mac_uptime",
         "mac_updates",
         "mac_update_available",
-        "alarm_heat"
+        "alarm_heat",
+        "mac_idle",
+        "mac_screen_locked",
+        "mac_display_on",
+        "mac_network_down",
+        "mac_network_up",
+        "mac_memory_pressure",
+        "mac_thermal_state",
+        "mac_disk_health",
+        "mac_last_backup",
+        "mac_drives"
       ],
       "capabilitiesOptions": {
         "measure_temperature.cpu": {
@@ -1143,6 +1785,17 @@
       "decimals": 1,
       "icon": "/assets/capabilities/disk.svg"
     },
+    "mac_disk_health": {
+      "type": "string",
+      "title": {
+        "en": "Disk health"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": false,
+      "icon": "/assets/capabilities/health.svg"
+    },
     "mac_disk_usage": {
       "type": "number",
       "title": {
@@ -1159,6 +1812,42 @@
       "max": 100,
       "decimals": 1,
       "icon": "/assets/capabilities/disk.svg"
+    },
+    "mac_display_on": {
+      "type": "boolean",
+      "title": {
+        "en": "Display"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "titleTrue": {
+        "en": "On"
+      },
+      "titleFalse": {
+        "en": "Off"
+      },
+      "insights": true,
+      "insightsTitleTrue": {
+        "en": "Display turned on"
+      },
+      "insightsTitleFalse": {
+        "en": "Display turned off"
+      },
+      "icon": "/assets/capabilities/display.svg"
+    },
+    "mac_drives": {
+      "type": "number",
+      "title": {
+        "en": "External drives"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": false,
+      "min": 0,
+      "decimals": 0,
+      "icon": "/assets/capabilities/drive.svg"
     },
     "mac_fan_rpm": {
       "type": "number",
@@ -1177,6 +1866,44 @@
       "decimals": 0,
       "icon": "/assets/capabilities/fan.svg"
     },
+    "mac_idle": {
+      "type": "number",
+      "title": {
+        "en": "Idle time"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "units": {
+        "en": "min"
+      },
+      "insights": true,
+      "min": 0,
+      "decimals": 0,
+      "icon": "/assets/capabilities/user.svg"
+    },
+    "mac_last_backup": {
+      "type": "string",
+      "title": {
+        "en": "Last backup"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": false,
+      "icon": "/assets/capabilities/backup.svg"
+    },
+    "mac_memory_pressure": {
+      "type": "string",
+      "title": {
+        "en": "Memory pressure"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": false,
+      "icon": "/assets/capabilities/pressure.svg"
+    },
     "mac_memory_usage": {
       "type": "number",
       "title": {
@@ -1193,6 +1920,72 @@
       "max": 100,
       "decimals": 1,
       "icon": "/assets/capabilities/memory.svg"
+    },
+    "mac_network_down": {
+      "type": "number",
+      "title": {
+        "en": "Download"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "units": {
+        "en": "Mbit/s"
+      },
+      "insights": true,
+      "min": 0,
+      "decimals": 1,
+      "icon": "/assets/capabilities/network.svg"
+    },
+    "mac_network_up": {
+      "type": "number",
+      "title": {
+        "en": "Upload"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "units": {
+        "en": "Mbit/s"
+      },
+      "insights": true,
+      "min": 0,
+      "decimals": 1,
+      "icon": "/assets/capabilities/network.svg"
+    },
+    "mac_screen_locked": {
+      "type": "boolean",
+      "title": {
+        "en": "Screen lock"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "titleTrue": {
+        "en": "Locked"
+      },
+      "titleFalse": {
+        "en": "Unlocked"
+      },
+      "insights": true,
+      "insightsTitleTrue": {
+        "en": "Screen locked"
+      },
+      "insightsTitleFalse": {
+        "en": "Screen unlocked"
+      },
+      "icon": "/assets/capabilities/lock.svg"
+    },
+    "mac_thermal_state": {
+      "type": "string",
+      "title": {
+        "en": "Thermal state"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": false,
+      "icon": "/assets/capabilities/thermometer.svg"
     },
     "mac_update_available": {
       "type": "boolean",

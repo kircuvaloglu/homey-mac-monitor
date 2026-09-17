@@ -1,0 +1,16 @@
+{
+  "type": "number",
+  "title": {
+    "en": "Upload"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "units": {
+    "en": "Mbit/s"
+  },
+  "insights": true,
+  "min": 0,
+  "decimals": 1,
+  "icon": "/assets/capabilities/network.svg"
+}

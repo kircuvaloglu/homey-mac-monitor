@@ -39,6 +39,7 @@ ICONS = {
     "storage": '<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/>'
                '<path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
     "refresh": '<path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/>',
+    "network": '<path d="M7 3v14M3 13l4 4 4-4M17 21V7M13 11l4-4 4 4"/>',
 }
 
 # Sample Mac shown in the preview.
@@ -47,6 +48,7 @@ TILES = [
     dict(icon="memory", color="blue", value="26", unit="%", label="Memory", percent=26),
     dict(icon="temperature", color="green", value="55", unit=" °C", label="Temperature", percent=44, gradient=True),
     dict(icon="fan", color="blue", value="1000", unit=" RPM", label="Fan", percent=20),
+    dict(icon="network", color="purple", value="43", unit=" Mbit/s", label="Download", extra="Upload 3.1 Mbit/s", percent=43, wide=True),
     dict(icon="storage", color="green", value="52", unit="%", label="Storage", extra="96.8 GB free", percent=52, wide=True),
 ]
 
@@ -65,8 +67,8 @@ def icon(name, x, y, size, color):
 def build(theme):
     T = THEMES[theme]
     S = 1024
-    k = 2.2                      # widget px -> preview px
-    card_w, card_h = 360 * k, 378 * k
+    k = 1.95                     # widget px -> preview px
+    card_w, card_h = 360 * k, 466 * k
     ox, oy = (S - card_w) / 2, (S - card_h) / 2
     px = lambda v: v * k
 
@@ -95,7 +97,7 @@ def build(theme):
     # tiles
     col_w, tile_h, gap = 160, 80, 8
     for i, t in enumerate(TILES):
-        row, col = divmod(i, 2)
+        row, col = divmod(i, 2) if i < 4 else (2 + i - 4, 0)
         tx, ty = 16 + (0 if t.get("wide") else col * (col_w + gap)), 74 + row * (tile_h + gap)
         tw = 328 if t.get("wide") else col_w
         x, y = g(tx, ty)
@@ -118,8 +120,9 @@ def build(theme):
         out.append(f'<rect x="{bx}" y="{by}" width="{max(px(6), bw * t["percent"] / 100)}" height="{px(6)}" rx="{px(3)}" fill="{fill}"/>')
 
     # footer
-    x, y = g(16, 356)
-    out.append(f'<text x="{x}" y="{y}" font-size="{px(13)}" fill="{T["ink2"]}">Power 9.4 W<tspan dx="{px(14)}">Uptime 5h 18m</tspan></text>')
+    x, y = g(16, 444)
+    out.append(f'<text x="{x}" y="{y}" font-size="{px(13)}" fill="{T["ink2"]}">Power 9.4 W<tspan dx="{px(14)}">Uptime 5h 18m</tspan>'
+               f'<tspan dx="{px(14)}">Locked</tspan></text>')
     out.append("</svg>")
     return "\n".join(out)
 

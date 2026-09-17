@@ -34,6 +34,14 @@
             "en": "CPU usage (%)"
           },
           "example": 86.5
+        },
+        {
+          "name": "process",
+          "type": "string",
+          "title": {
+            "en": "Busiest process"
+          },
+          "example": "Final Cut Pro"
         }
       ]
     },
@@ -300,6 +308,280 @@
       "title": {
         "en": "The Mac becomes reachable again"
       }
+    },
+    {
+      "id": "idle_above",
+      "title": {
+        "en": "The Mac has been idle for..."
+      },
+      "titleFormatted": {
+        "en": "The Mac has been idle for [[minutes]] minutes"
+      },
+      "args": [
+        {
+          "name": "minutes",
+          "type": "number",
+          "min": 1,
+          "max": 1440,
+          "step": 1,
+          "title": {
+            "en": "Minutes"
+          },
+          "placeholder": {
+            "en": "10"
+          }
+        }
+      ],
+      "tokens": [
+        {
+          "name": "minutes",
+          "type": "number",
+          "title": {
+            "en": "Idle time (min)"
+          },
+          "example": 10
+        }
+      ],
+      "hint": {
+        "en": "Idle means no keyboard or mouse input."
+      }
+    },
+    {
+      "id": "user_active",
+      "title": {
+        "en": "Someone starts using the Mac again"
+      },
+      "hint": {
+        "en": "Fires when there is input after at least two idle minutes."
+      }
+    },
+    {
+      "id": "screen_locked",
+      "title": {
+        "en": "The screen is locked"
+      }
+    },
+    {
+      "id": "screen_unlocked",
+      "title": {
+        "en": "The screen is unlocked"
+      }
+    },
+    {
+      "id": "display_on",
+      "title": {
+        "en": "The display turns on"
+      }
+    },
+    {
+      "id": "display_off",
+      "title": {
+        "en": "The display turns off"
+      }
+    },
+    {
+      "id": "network_down_above",
+      "title": {
+        "en": "Download speed rises above..."
+      },
+      "titleFormatted": {
+        "en": "Download speed rises above [[mbps]] Mbit/s"
+      },
+      "args": [
+        {
+          "name": "mbps",
+          "type": "number",
+          "min": 0.1,
+          "max": 10000,
+          "step": 0.1,
+          "title": {
+            "en": "Speed"
+          },
+          "placeholder": {
+            "en": "50"
+          }
+        }
+      ],
+      "tokens": [
+        {
+          "name": "mbps",
+          "type": "number",
+          "title": {
+            "en": "Download (Mbit/s)"
+          },
+          "example": 64.2
+        }
+      ]
+    },
+    {
+      "id": "network_up_above",
+      "title": {
+        "en": "Upload speed rises above..."
+      },
+      "titleFormatted": {
+        "en": "Upload speed rises above [[mbps]] Mbit/s"
+      },
+      "args": [
+        {
+          "name": "mbps",
+          "type": "number",
+          "min": 0.1,
+          "max": 10000,
+          "step": 0.1,
+          "title": {
+            "en": "Speed"
+          },
+          "placeholder": {
+            "en": "20"
+          }
+        }
+      ],
+      "tokens": [
+        {
+          "name": "mbps",
+          "type": "number",
+          "title": {
+            "en": "Upload (Mbit/s)"
+          },
+          "example": 24.8
+        }
+      ]
+    },
+    {
+      "id": "memory_pressure_changed",
+      "title": {
+        "en": "Memory pressure changes"
+      },
+      "tokens": [
+        {
+          "name": "pressure",
+          "type": "string",
+          "title": {
+            "en": "Memory pressure"
+          },
+          "example": "warning"
+        }
+      ]
+    },
+    {
+      "id": "thermal_state_changed",
+      "title": {
+        "en": "Thermal state changes"
+      },
+      "hint": {
+        "en": "The states are nominal, fair, serious and critical."
+      },
+      "tokens": [
+        {
+          "name": "state",
+          "type": "string",
+          "title": {
+            "en": "Thermal state"
+          },
+          "example": "serious"
+        }
+      ]
+    },
+    {
+      "id": "disk_failing",
+      "title": {
+        "en": "The disk reports a health problem"
+      },
+      "hint": {
+        "en": "Based on the SMART status of the internal disk."
+      },
+      "tokens": [
+        {
+          "name": "status",
+          "type": "string",
+          "title": {
+            "en": "SMART status"
+          },
+          "example": "Failing"
+        }
+      ]
+    },
+    {
+      "id": "backup_finished",
+      "title": {
+        "en": "A Time Machine backup finishes"
+      },
+      "tokens": [
+        {
+          "name": "time",
+          "type": "string",
+          "title": {
+            "en": "Backup time"
+          },
+          "example": "14:05"
+        }
+      ]
+    },
+    {
+      "id": "backup_overdue",
+      "title": {
+        "en": "No Time Machine backup for..."
+      },
+      "titleFormatted": {
+        "en": "No Time Machine backup for [[hours]] hours"
+      },
+      "args": [
+        {
+          "name": "hours",
+          "type": "number",
+          "min": 1,
+          "max": 8760,
+          "step": 1,
+          "title": {
+            "en": "Hours"
+          },
+          "placeholder": {
+            "en": "48"
+          }
+        }
+      ],
+      "tokens": [
+        {
+          "name": "hours",
+          "type": "number",
+          "title": {
+            "en": "Hours since last backup"
+          },
+          "example": 49
+        }
+      ]
+    },
+    {
+      "id": "drive_connected",
+      "title": {
+        "en": "A drive is connected"
+      },
+      "tokens": [
+        {
+          "name": "name",
+          "type": "string",
+          "title": {
+            "en": "Drive name"
+          },
+          "example": "Backup"
+        }
+      ]
+    },
+    {
+      "id": "drive_disconnected",
+      "title": {
+        "en": "A drive is disconnected"
+      },
+      "tokens": [
+        {
+          "name": "name",
+          "type": "string",
+          "title": {
+            "en": "Drive name"
+          },
+          "example": "Backup"
+        }
+      ]
     }
   ],
   "conditions": [
@@ -458,6 +740,146 @@
       "title": {
         "en": "A macOS update !{{is|is not}} available"
       }
+    },
+    {
+      "id": "idle_longer",
+      "title": {
+        "en": "The Mac !{{has|has not}} been idle for..."
+      },
+      "titleFormatted": {
+        "en": "The Mac !{{has|has not}} been idle for [[minutes]] minutes"
+      },
+      "args": [
+        {
+          "name": "minutes",
+          "type": "number",
+          "min": 1,
+          "max": 1440,
+          "step": 1,
+          "title": {
+            "en": "Minutes"
+          },
+          "placeholder": {
+            "en": "10"
+          }
+        }
+      ]
+    },
+    {
+      "id": "screen_is_locked",
+      "title": {
+        "en": "The screen !{{is|is not}} locked"
+      }
+    },
+    {
+      "id": "display_is_on",
+      "title": {
+        "en": "The display !{{is|is not}} on"
+      }
+    },
+    {
+      "id": "app_running",
+      "title": {
+        "en": "An app !{{is|is not}} running"
+      },
+      "titleFormatted": {
+        "en": "[[app]] !{{is|is not}} running"
+      },
+      "args": [
+        {
+          "name": "app",
+          "type": "autocomplete",
+          "title": {
+            "en": "App"
+          },
+          "placeholder": {
+            "en": "Select an app"
+          }
+        }
+      ]
+    },
+    {
+      "id": "drive_connected",
+      "title": {
+        "en": "A drive !{{is|is not}} connected"
+      },
+      "titleFormatted": {
+        "en": "[[drive]] !{{is|is not}} connected"
+      },
+      "args": [
+        {
+          "name": "drive",
+          "type": "autocomplete",
+          "title": {
+            "en": "Drive"
+          },
+          "placeholder": {
+            "en": "Select a drive"
+          }
+        }
+      ]
+    },
+    {
+      "id": "memory_pressure_is",
+      "title": {
+        "en": "Memory pressure !{{is|is not}}..."
+      },
+      "titleFormatted": {
+        "en": "Memory pressure !{{is|is not}} [[level]]"
+      },
+      "args": [
+        {
+          "name": "level",
+          "type": "dropdown",
+          "title": {
+            "en": "Level"
+          },
+          "values": [
+            {
+              "id": "normal",
+              "title": {
+                "en": "Normal"
+              }
+            },
+            {
+              "id": "warning",
+              "title": {
+                "en": "Warning"
+              }
+            },
+            {
+              "id": "critical",
+              "title": {
+                "en": "Critical"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "backup_older",
+      "title": {
+        "en": "The last backup !{{is|is not}} older than..."
+      },
+      "titleFormatted": {
+        "en": "The last backup !{{is|is not}} older than [[hours]] hours"
+      },
+      "args": [
+        {
+          "name": "hours",
+          "type": "number",
+          "min": 1,
+          "max": 8760,
+          "step": 1,
+          "title": {
+            "en": "Hours"
+          },
+          "placeholder": {
+            "en": "48"
+          }
+        }
+      ]
     }
   ],
   "actions": [
@@ -559,6 +981,63 @@
             "en": "Output"
           },
           "example": "Backup finished"
+        }
+      ]
+    },
+    {
+      "id": "keep_awake",
+      "title": {
+        "en": "Keep the Mac awake..."
+      },
+      "titleFormatted": {
+        "en": "Keep the Mac awake for [[minutes]] minutes"
+      },
+      "hint": {
+        "en": "Prevents sleep and display sleep until the time runs out."
+      },
+      "args": [
+        {
+          "name": "minutes",
+          "type": "number",
+          "min": 1,
+          "max": 1440,
+          "step": 1,
+          "title": {
+            "en": "Minutes"
+          },
+          "placeholder": {
+            "en": "60"
+          }
+        }
+      ]
+    },
+    {
+      "id": "allow_sleep",
+      "title": {
+        "en": "Allow the Mac to sleep again"
+      }
+    },
+    {
+      "id": "say",
+      "title": {
+        "en": "Speak text on the Mac"
+      },
+      "titleFormatted": {
+        "en": "Say [[text]]"
+      },
+      "hint": {
+        "en": "Uses the Mac's voice and speakers. Needs a logged-in user."
+      },
+      "args": [
+        {
+          "name": "text",
+          "type": "text",
+          "title": {
+            "en": "Text"
+          },
+          "placeholder": {
+            "en": "Dinner is ready"
+          }
         }
       ]
     },

@@ -30,5 +30,15 @@
     "invalidMacAddress": "The Wake-on-LAN MAC address in the device settings is not valid.",
     "noCommands": "No commands are defined in the agent's config.json.",
     "failed": "The Mac could not run the action: __message__"
+  },
+  "app": {
+    "application": "App",
+    "process": "Process"
+  },
+  "backup": {
+    "never": "Never",
+    "minutes": "__n__ min ago",
+    "hours": "__n__ h ago",
+    "days": "__n__ days ago"
   }
 }

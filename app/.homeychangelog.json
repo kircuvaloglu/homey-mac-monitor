@@ -1,4 +1,7 @@
 {
+  "1.5.0": {
+    "en": "Idle time, screen lock and display state, network speed, memory pressure, thermal state, disk health, Time Machine backups and external drives. New Flow cards for all of these, plus keep awake, allow sleep, speak text and app running. Link to the community topic."
+  },
   "1.0.0": {
     "en": "Initial release. Monitor Apple silicon Macs from Homey: temperatures, CPU, memory, disk space, fan speed and power, with Flow cards to sleep, wake, lock, notify, run commands, restart or shut down, and a dashboard widget."
   }

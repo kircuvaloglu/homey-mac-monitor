@@ -1,0 +1,13 @@
+{
+  "type": "number",
+  "title": {
+    "en": "External drives"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "insights": false,
+  "min": 0,
+  "decimals": 0,
+  "icon": "/assets/capabilities/drive.svg"
+}

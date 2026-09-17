@@ -1,16 +1,24 @@
 'use strict';
 
 const Homey = require('homey');
-const { getStatus, checkUpdates, runAction } = require('../../lib/agent-api');
+const { getStatus, checkUpdates, runAction, getProcesses } = require('../../lib/agent-api');
 const wol = require('../../lib/wake-on-lan');
 
 // A single missed poll is normal for a busy or sleeping Mac.
 const FAILURES_BEFORE_OFFLINE = 3;
 
 // Not every Mac reports these: the GPU sensor is only powered while the GPU is
-// busy, and fanless models have no fan. They are added once a value arrives and
+// busy, fanless models have no fan, and the session values need a logged-in user. They are added once a value arrives and
 // removed if none has ever been seen on this Mac.
-const OPTIONAL_CAPABILITIES = ['measure_temperature.gpu', 'mac_fan_rpm', 'measure_power'];
+const OPTIONAL_CAPABILITIES = [
+  'measure_temperature.gpu', 'mac_fan_rpm', 'measure_power',
+  'mac_screen_locked', 'mac_display_on', 'mac_idle',
+  'mac_network_down', 'mac_network_up', 'mac_memory_pressure', 'mac_thermal_state',
+  'mac_disk_health', 'mac_last_backup',
+];
+
+const has = (v) => v !== null && v !== undefined;
+const capitalize = (v) => (typeof v === 'string' && v ? v[0].toUpperCase() + v.slice(1) : v);
 
 module.exports = class MacDevice extends Homey.Device {
 
@@ -47,7 +55,7 @@ module.exports = class MacDevice extends Homey.Device {
   async setOptional(capability, value) {
     const seen = this.getStoreValue('supported') || {};
 
-    if (isNum(value)) {
+    if (has(value) && (typeof value !== 'number' || isNum(value))) {
       if (!this.hasCapability(capability)) {
         await this.addCapability(capability).catch((err) => this.error(`Could not add ${capability}`, err));
       }
@@ -119,7 +127,7 @@ module.exports = class MacDevice extends Homey.Device {
     }
     if (!this.online) {
       this.online = true;
-      this.driver.triggers.cameOnline.trigger(this, {}, {}).catch(() => {});
+      this.fire('came_online');
     }
 
     try {
@@ -137,7 +145,7 @@ module.exports = class MacDevice extends Homey.Device {
     this.online = false;
     const asleep = Date.now() - this.sleepRequestedAt < 15 * 60 * 1000;
     await this.setWarning(this.homey.__(asleep ? 'device.asleep' : 'device.unreachable')).catch(() => {});
-    this.driver.triggers.wentOffline.trigger(this, {}, {}).catch(() => {});
+    this.fire('went_offline');
     this.log(`Unreachable: ${err.message}`);
   }
 
@@ -169,6 +177,20 @@ module.exports = class MacDevice extends Homey.Device {
     await this.set('mac_updates', num(updates.count) || 0);
     await this.set('mac_update_available', (updates.count || 0) > 0);
 
+    const activity = s.activity || {};
+    const net = s.network || {};
+    const state = this.stateOf(s);
+    await this.setOptional('mac_screen_locked', activity.screenLocked);
+    await this.setOptional('mac_display_on', activity.displayOn);
+    await this.setOptional('mac_idle', state.idleMinutes);
+    await this.setOptional('mac_network_down', num(net.downMbps));
+    await this.setOptional('mac_network_up', num(net.upMbps));
+    await this.setOptional('mac_memory_pressure', capitalize(memory.pressure));
+    await this.setOptional('mac_thermal_state', capitalize(thermal.state));
+    await this.setOptional('mac_disk_health', s.diskHealth);
+    await this.setOptional('mac_last_backup', s.backup ? this.formatBackup(s.backup.lastBackup) : null);
+    await this.set('mac_drives', Array.isArray(s.drives) ? s.drives.length : 0);
+
     await this.updateInfoSettings(s);
     await this.rememberAgentDetails(s);
     await this.runTriggers(s);
@@ -178,17 +200,44 @@ module.exports = class MacDevice extends Homey.Device {
 
   stateOf(s) {
     const cpu = s.cpu || {};
+    const activity = s.activity || {};
+    const net = s.network || {};
+    const backup = s.backup || null;
     return {
       cpuUsage: num(cpu.usagePercent),
       memory: num((s.memory || {}).percent),
       diskFree: num((s.disk || {}).freeGB),
       fanRpm: num((s.thermal || {}).fanRpm),
+      idleMinutes: isNum(activity.idleSeconds) ? Math.floor(activity.idleSeconds / 60) : null,
+      idleSeconds: num(activity.idleSeconds),
+      screenLocked: has(activity.screenLocked) ? activity.screenLocked : null,
+      displayOn: has(activity.displayOn) ? activity.displayOn : null,
+      downMbps: num(net.downMbps),
+      upMbps: num(net.upMbps),
+      pressure: (s.memory || {}).pressure || null,
+      thermalState: (s.thermal || {}).state || null,
+      diskHealth: s.diskHealth || null,
+      lastBackup: backup && backup.lastBackup ? Date.parse(backup.lastBackup) : null,
+      backupAgeHours: backup && backup.lastBackup
+        ? Math.floor((Date.now() - Date.parse(backup.lastBackup)) / 3600000) : null,
+      drives: Array.isArray(s.drives) ? s.drives : null,
+      topProcess: ((s.topProcesses || [])[0] || {}).name || '-',
       updates: (s.updates || {}).count || 0,
       uptime: s.uptimeSeconds || 0,
     };
   }
 
   async rememberAgentDetails(s) {
+    if (Array.isArray(s.drives)) {
+      if (JSON.stringify(s.drives) !== JSON.stringify(this.getStoreValue('drives') || [])) {
+        await this.setStoreValue('drives', s.drives).catch(() => {});
+      }
+      // Remember drives seen before, so they can be picked in Flows while disconnected.
+      const known = this.getStoreValue('knownDrives') || [];
+      const merged = [...new Set([...known, ...s.drives])].slice(-50);
+      if (merged.length !== known.length) await this.setStoreValue('knownDrives', merged).catch(() => {});
+    }
+
     const commands = Array.isArray(s.commandsAvailable) ? s.commandsAvailable : [];
     if (JSON.stringify(commands) !== JSON.stringify(this.getStoreValue('commands') || [])) {
       await this.setStoreValue('commands', commands).catch(() => {});
@@ -207,27 +256,89 @@ module.exports = class MacDevice extends Homey.Device {
     }
   }
 
+  fire(id, tokens = {}) {
+    this.driver.events[id].trigger(this, tokens, {}).catch(() => {});
+  }
+
   async runTriggers(s) {
     const p = this.previous;
     if (p.uptime === undefined) return; // first poll, nothing to compare with
 
     const cur = this.stateOf(s);
-    const t = this.driver.triggers;
 
     for (const trig of this.driver.thresholdTriggers) {
       const before = p[trig.key];
       const now = cur[trig.key];
       if (!isNum(before) || !isNum(now) || before === now) continue;
-      trig.card.trigger(this, { [trig.token]: now }, { prev: before, cur: now }).catch(() => {});
+      const tokens = { [trig.token]: now };
+      if (trig.id === 'cpu_usage_above') tokens.process = cur.topProcess;
+      trig.card.trigger(this, tokens, { prev: before, cur: now }).catch(() => {});
+    }
+
+    const edge = (key, onId, offId) => {
+      if (!has(p[key]) || !has(cur[key]) || p[key] === cur[key]) return;
+      this.fire(cur[key] ? onId : offId);
+    };
+    edge('screenLocked', 'screen_locked', 'screen_unlocked');
+    edge('displayOn', 'display_on', 'display_off');
+
+    if (isNum(p.idleSeconds) && isNum(cur.idleSeconds) && p.idleSeconds >= 120 && cur.idleSeconds < 60) {
+      this.fire('user_active');
+    }
+    if (p.pressure && cur.pressure && p.pressure !== cur.pressure) {
+      this.fire('memory_pressure_changed', { pressure: cur.pressure });
+    }
+    if (p.thermalState && cur.thermalState && p.thermalState !== cur.thermalState) {
+      this.fire('thermal_state_changed', { state: cur.thermalState });
+    }
+    if (cur.diskHealth && cur.diskHealth !== 'Verified' && cur.diskHealth !== p.diskHealth) {
+      this.fire('disk_failing', { status: cur.diskHealth });
+    }
+    if (p.lastBackup && cur.lastBackup && cur.lastBackup > p.lastBackup) {
+      this.fire('backup_finished', { time: this.formatTime(cur.lastBackup) });
+    }
+    if (p.drives && cur.drives) {
+      cur.drives.filter((d) => !p.drives.includes(d)).forEach((name) => this.fire('drive_connected', { name }));
+      p.drives.filter((d) => !cur.drives.includes(d)).forEach((name) => this.fire('drive_disconnected', { name }));
     }
     if (cur.updates > p.updates) {
       const names = ((s.updates || {}).items || []).map((i) => i.title).join(', ');
-      t.updatesFound.trigger(this, { count: cur.updates, names: names || '-' }, {}).catch(() => {});
+      this.fire('updates_found', { count: cur.updates, names: names || '-' });
     }
     // Uptime going backwards means the Mac restarted.
     if (cur.uptime > 0 && p.uptime > 0 && cur.uptime < p.uptime) {
-      t.rebooted.trigger(this, {}, {}).catch(() => {});
+      this.fire('rebooted');
     }
+  }
+
+  backupAgeHours() {
+    return isNum(this.previous.backupAgeHours) ? this.previous.backupAgeHours : null;
+  }
+
+  async processes() {
+    try {
+      return await getProcesses(this.connection());
+    } catch (err) {
+      throw new Error(this.homey.__('action.failed', { message: err.message }));
+    }
+  }
+
+  async isAppRunning(name) {
+    const { apps = [], processes = [] } = await this.processes();
+    const target = String(name || '').toLowerCase();
+    return [...apps, ...processes].some((n) => n.toLowerCase() === target);
+  }
+
+  // Apps from the Applications folders first, then other processes.
+  async findApps(query) {
+    const { apps = [], processes = [] } = await this.processes();
+    const q = String(query || '').toLowerCase();
+    const names = [...new Set([...apps, ...processes])].filter((n) => n.toLowerCase().includes(q));
+    return names.slice(0, 50).map((n) => ({
+      id: n,
+      name: n,
+      description: apps.includes(n) ? this.homey.__('app.application') : this.homey.__('app.process'),
+    }));
   }
 
   // Actions
@@ -277,6 +388,22 @@ module.exports = class MacDevice extends Homey.Device {
     for (const delay of [10, 25, 45]) {
       this.homey.setTimeout(() => this.poll().catch(() => {}), delay * 1000);
     }
+  }
+
+  formatTime(ms) {
+    try {
+      return new Date(ms).toLocaleTimeString('en-GB', { timeZone: this.homey.clock.getTimezone(), hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return new Date(ms).toISOString();
+    }
+  }
+
+  formatBackup(iso) {
+    if (!iso) return this.homey.__('backup.never');
+    const hours = (Date.now() - Date.parse(iso)) / 3600000;
+    if (hours < 1) return this.homey.__('backup.minutes', { n: Math.max(1, Math.round(hours * 60)) });
+    if (hours < 48) return this.homey.__('backup.hours', { n: Math.round(hours) });
+    return this.homey.__('backup.days', { n: Math.round(hours / 24) });
   }
 
   formatDate(iso) {

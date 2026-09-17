@@ -104,7 +104,8 @@
          '<path d="M10 12c-4 0-7-1-7-4 0-2 3-2.5 5 0l2.6 2.3"/>',
     power: '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
     storage: '<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
-    refresh: '<path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/>'
+    refresh: '<path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/>',
+    network: '<path d="M7 3v14M3 13l4 4 4-4M17 21V7M13 11l4-4 4 4"/>'
   };
 
   function svg(name) {
@@ -155,46 +156,58 @@
 
   function renderMac(mac) {
     var tiles = [];
+    var wide = [];
 
     if (isNum(mac.usage)) {
-      tiles.push(tile({ icon: 'cpu', color: 'purple', value: Math.round(mac.usage), unit: '%',
-                        label: 'CPU', percent: mac.usage }));
+      tiles.push({ icon: 'cpu', color: 'purple', value: Math.round(mac.usage), unit: '%',
+                  label: 'CPU', percent: mac.usage });
     }
     if (isNum(mac.memory)) {
-      tiles.push(tile({ icon: 'memory', color: 'blue', value: Math.round(mac.memory), unit: '%',
-                        label: 'Memory', percent: mac.memory }));
+      tiles.push({ icon: 'memory', color: 'blue', value: Math.round(mac.memory), unit: '%',
+                  label: 'Memory', percent: mac.memory });
     }
     if (isNum(mac.temperature)) {
       var t = mac.temperature;
-      tiles.push(tile({ icon: 'temperature', color: 'green', value: t.toFixed(0), unit: ' °C',
-                        label: 'Temperature', tone: t >= 90 ? 'crit' : (t >= 80 ? 'warn' : ''),
-                        // 20 °C to 100 °C mapped onto the bar
-                        percent: (t - 20) / 0.8,
-                        barFill: 'linear-gradient(90deg, #38d6e0, #4cc98a 45%, #f2b457 75%, #f07a63)' }));
+      tiles.push({ icon: 'temperature', color: 'green', value: t.toFixed(0), unit: ' °C',
+                  label: 'Temperature', tone: t >= 90 ? 'crit' : (t >= 80 ? 'warn' : ''),
+                  // 20 °C to 100 °C mapped onto the bar
+                  percent: (t - 20) / 0.8,
+                  barFill: 'linear-gradient(90deg, #38d6e0, #4cc98a 45%, #f2b457 75%, #f07a63)' });
     }
     if (isNum(mac.fanRpm)) {
       // Mac mini fans top out around 5000 RPM.
-      tiles.push(tile({ icon: 'fan', color: 'blue', value: Math.round(mac.fanRpm), unit: ' RPM',
-                        label: 'Fan', percent: mac.fanRpm / 50 }));
+      tiles.push({ icon: 'fan', color: 'blue', value: Math.round(mac.fanRpm), unit: ' RPM',
+                  label: 'Fan', percent: mac.fanRpm / 50 });
     } else if (isNum(mac.power)) {
-      tiles.push(tile({ icon: 'power', color: 'amber', value: mac.power.toFixed(1), unit: ' W',
-                        label: 'Power', percent: null }));
+      tiles.push({ icon: 'power', color: 'amber', value: mac.power.toFixed(1), unit: ' W',
+                  label: 'Power', percent: null });
+    }
+    if (isNum(mac.down)) {
+      // 100 Mbit/s fills the bar.
+      wide.push({ icon: 'network', color: 'purple', value: mac.down < 10 ? mac.down.toFixed(1) : Math.round(mac.down),
+                  unit: ' Mbit/s', label: 'Download', extra: isNum(mac.up) ? 'Upload ' + mac.up.toFixed(1) + ' Mbit/s' : '',
+                  percent: mac.down, wide: true });
     }
     if (isNum(mac.diskUsage) || isNum(mac.diskFree)) {
       var free = mac.diskFree;
       var tone = isNum(free) ? (free < 10 ? 'crit' : (free < 25 ? 'warn' : '')) : '';
-      tiles.push(tile({ icon: 'storage', color: 'green', wide: true, tone: tone,
-                        value: isNum(mac.diskUsage) ? Math.round(mac.diskUsage) : '–', unit: '%',
-                        label: 'Storage', extra: isNum(free) ? free.toFixed(1) + ' GB free' : '',
-                        percent: isNum(mac.diskUsage) ? mac.diskUsage : null,
-                        barFill: tone === 'crit' ? 'var(--red)' : (tone === 'warn' ? 'var(--amber)' : 'var(--green)') }));
+      wide.push({ icon: 'storage', color: 'green', wide: true, tone: tone,
+                  value: isNum(mac.diskUsage) ? Math.round(mac.diskUsage) : '–', unit: '%',
+                  label: 'Storage', extra: isNum(free) ? free.toFixed(1) + ' GB free' : '',
+                  percent: isNum(mac.diskUsage) ? mac.diskUsage : null,
+                  barFill: tone === 'crit' ? 'var(--red)' : (tone === 'warn' ? 'var(--amber)' : 'var(--green)') });
     }
+    // A half tile left on its own takes the full width.
+    if (tiles.length % 2) tiles[tiles.length - 1].wide = true;
+    tiles = tiles.concat(wide).map(tile);
 
     var foot = '';
     if (settings.showFooter) {
       var parts = [];
       if (isNum(mac.power) && isNum(mac.fanRpm)) parts.push('<span>Power ' + mac.power.toFixed(1) + ' W</span>');
       if (mac.uptime && mac.uptime !== '-') parts.push('<span>Uptime ' + esc(mac.uptime) + '</span>');
+      if (mac.locked) parts.push('<span>Locked</span>');
+      else if (isNum(mac.idle) && mac.idle >= 5) parts.push('<span>Idle ' + mac.idle + ' min</span>');
       if (mac.throttled) parts.push('<span class="badge crit">Throttling</span>');
       if (isNum(mac.updates) && mac.updates > 0) {
         parts.push('<span class="badge warn">' + mac.updates + (mac.updates === 1 ? ' update' : ' updates') + '</span>');

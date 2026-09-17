@@ -16,7 +16,17 @@
     "mac_uptime",
     "mac_updates",
     "mac_update_available",
-    "alarm_heat"
+    "alarm_heat",
+    "mac_idle",
+    "mac_screen_locked",
+    "mac_display_on",
+    "mac_network_down",
+    "mac_network_up",
+    "mac_memory_pressure",
+    "mac_thermal_state",
+    "mac_disk_health",
+    "mac_last_backup",
+    "mac_drives"
   ],
   "capabilitiesOptions": {
     "measure_temperature.cpu": {

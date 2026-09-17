@@ -15,6 +15,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { execFile, spawn } = require('child_process');
 
+const AGENT_VERSION = '1.5.0';
 const CONFIG_PATH = process.env.HOMEY_MAC_AGENT_CONFIG || '/usr/local/etc/homey-mac-agent/config.json';
 const HERE = __dirname;
 
@@ -31,6 +32,8 @@ const DEFAULTS = {
     displaysleep: true,
     lock: true,
     notify: true,
+    say: true,
+    keepawake: true,
     restart: false,
     shutdown: false
   },
@@ -238,6 +241,110 @@ async function readTopProcesses() {
     .filter((p) => Number.isFinite(p.cpu));
 }
 
+async function readIdleSeconds() {
+  const out = await sh('/usr/sbin/ioreg', ['-c', 'IOHIDSystem', '-d', '4'], 4000);
+  const m = out && out.match(/"HIDIdleTime" = (\d+)/);
+  return m ? Math.round(parseInt(m[1], 10) / 1e9) : null;
+}
+
+async function readScreenLocked() {
+  const out = await sh('/usr/sbin/ioreg', ['-n', 'Root', '-d1'], 4000);
+  const m = out && out.match(/"IOConsoleUsers" = \((.*)\)/);
+  if (!m) return null;
+  const onConsole = m[1].split('},{').find((u) => u.includes('"kCGSSessionOnConsoleKey"=Yes'));
+  if (!onConsole) return null;
+  return onConsole.includes('"CGSSessionScreenIsLocked"=Yes');
+}
+
+// Display state lives in the user's session.
+async function readSession() {
+  const uid = await consoleUID();
+  if (!uid) return { userLoggedIn: false };
+  const bin = path.join(HERE, 'macsession');
+  if (!fs.existsSync(bin)) return { userLoggedIn: true };
+  const out = await sh('/bin/launchctl', ['asuser', uid, bin], 5000);
+  try {
+    return { userLoggedIn: true, ...JSON.parse(out) };
+  } catch {
+    return { userLoggedIn: true };
+  }
+}
+
+let lastNetSample = null;
+async function readNetworkRate() {
+  const out = await sh('/usr/sbin/netstat', ['-ibn'], 4000);
+  if (!out) return null;
+  let rx = 0;
+  let tx = 0;
+  for (const line of out.split('\n')) {
+    const c = line.trim().split(/\s+/);
+    // Physical interfaces only; the link row carries the byte counters.
+    if (c.length < 11 || !/^en\d+$/.test(c[0]) || !c[2].startsWith('<Link')) continue;
+    rx += Number(c[6]) || 0;
+    tx += Number(c[9]) || 0;
+  }
+  const now = Date.now();
+  let rate = null;
+  if (lastNetSample && now > lastNetSample.at && rx >= lastNetSample.rx && tx >= lastNetSample.tx) {
+    const seconds = (now - lastNetSample.at) / 1000;
+    rate = {
+      downMbps: round(((rx - lastNetSample.rx) * 8) / 1e6 / seconds, 2),
+      upMbps: round(((tx - lastNetSample.tx) * 8) / 1e6 / seconds, 2)
+    };
+  }
+  lastNetSample = { at: now, rx, tx };
+  return rate;
+}
+
+const PRESSURE_LEVELS = { 1: 'normal', 2: 'warning', 4: 'critical' };
+async function readMemoryPressure() {
+  const out = await sh('/usr/sbin/sysctl', ['-n', 'kern.memorystatus_vm_pressure_level'], 3000);
+  return out ? PRESSURE_LEVELS[parseInt(out, 10)] || null : null;
+}
+
+const THERMAL_STATES = ['nominal', 'fair', 'serious', 'critical'];
+
+// Disk health and Time Machine change slowly and are refreshed every few minutes.
+let slowInfo = { diskHealth: null, backup: null };
+async function readSlowInfo() {
+  const [disk, tmPrefs, tmStatus] = await Promise.all([
+    sh('/usr/sbin/diskutil', ['info', 'disk0'], 10000),
+    sh('/usr/bin/plutil', ['-p', '/Library/Preferences/com.apple.TimeMachine.plist'], 5000),
+    sh('/usr/bin/tmutil', ['status'], 10000)
+  ]);
+  const smart = disk && disk.match(/SMART Status:\s*(.+)/);
+  let backup = null;
+  if (tmPrefs && tmPrefs.includes('"Destinations"')) {
+    const dates = [...tmPrefs.matchAll(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{4})/g)]
+      .map((m) => new Date(m[1].replace(' ', 'T').replace(/ ([+-]\d{2})(\d{2})$/, '$1:$2')))
+      .filter((d) => !Number.isNaN(d.getTime()) && d.getTime() <= Date.now() + 60000);
+    const last = dates.length ? new Date(Math.max(...dates)) : null;
+    backup = {
+      configured: true,
+      lastBackup: last ? last.toISOString() : null,
+      running: /Running = 1;/.test(tmStatus || '')
+    };
+  }
+  slowInfo = { diskHealth: smart ? smart[1].trim() : null, backup };
+  return slowInfo;
+}
+
+// apps: bundles from the Applications folders, processes: every executable name.
+async function listProcesses() {
+  const out = await sh('/bin/ps', ['-axo', 'comm'], 5000);
+  const apps = new Set();
+  const processes = new Set();
+  for (const line of (out || '').split('\n').slice(1)) {
+    const p = line.trim();
+    if (!p) continue;
+    const app = p.match(/^(?:\/Users\/[^/]+)?\/Applications\/(?:[^/]+\/)*?([^/]+)\.app\//);
+    if (app) apps.add(app[1]);
+    processes.add(p.split('/').pop());
+  }
+  const sort = (set) => [...set].sort((a, b) => a.localeCompare(b));
+  return { apps: sort(apps), processes: sort(processes) };
+}
+
 // Static system info, refreshed at startup and with each update check.
 let staticInfo = null;
 async function readStaticInfo() {
@@ -322,22 +429,28 @@ async function checkUpdates() {
 let snapshot = { ready: false };
 
 async function refreshSnapshot() {
-  const [sensors, memory, disks, battery, thermal, top, primaryIface] = await Promise.all([
-    readSensors(),
-    readMemory(),
-    readDisks(),
-    readBattery(),
-    readThermalPressure(),
-    readTopProcesses(),
-    readPrimaryInterface()
-  ]);
+  const [sensors, memory, disks, battery, thermal, top, primaryIface, idle, locked, session, netRate, pressure] =
+    await Promise.all([
+      readSensors(),
+      readMemory(),
+      readDisks(),
+      readBattery(),
+      readThermalPressure(),
+      readTopProcesses(),
+      readPrimaryInterface(),
+      readIdleSeconds(),
+      readScreenLocked(),
+      readSession(),
+      readNetworkRate(),
+      readMemoryPressure()
+    ]);
 
   const interfaces = readNetwork();
   const primary = interfaces.find((i) => i.interface === primaryIface) || interfaces[0] || null;
 
   snapshot = {
     ready: true,
-    agentVersion: '1.0.0',
+    agentVersion: AGENT_VERSION,
     timestamp: new Date().toISOString(),
     uptimeSeconds: Math.round(os.uptime()),
     bootedAt: new Date(Date.now() - os.uptime() * 1000).toISOString(),
@@ -356,13 +469,26 @@ async function refreshSnapshot() {
       fanPercent: sensors.ok ? sensors.fanPercent ?? null : null,
       fans: sensors.ok ? sensors.fans ?? [] : [],
       powerWatts: sensors.ok ? sensors.powerWatts ?? null : null,
+      state: sensors.ok && Number.isInteger(sensors.thermalState) ? THERMAL_STATES[sensors.thermalState] || null : null,
       sensorsAvailable: !!sensors.ok
     },
-    memory,
+    memory: memory ? { ...memory, pressure } : null,
     disk: disks ? disks.main : null,
     volumes: disks ? disks.volumes : [],
-    network: { primary, interfaces },
+    network: { primary, interfaces, ...(netRate || {}) },
     battery,
+    activity: {
+      idleSeconds: idle,
+      screenLocked: locked,
+      userLoggedIn: !!session.userLoggedIn,
+      displayOn: typeof session.displayOn === 'boolean' ? session.displayOn : null
+    },
+    diskHealth: slowInfo.diskHealth,
+    backup: slowInfo.backup,
+    drives: (disks ? disks.volumes : [])
+      .filter((v) => v.mount.startsWith('/Volumes/'))
+      .map((v) => v.mount.slice('/Volumes/'.length)),
+    keepAwakeUntil: keepAwake ? new Date(keepAwake.until).toISOString() : null,
     topProcesses: top,
     updates: updateCache,
     actionsEnabled: Object.entries(config.allowActions)
@@ -385,8 +511,37 @@ async function consoleUID() {
   return out ? out.trim() : null;
 }
 
+let keepAwake = null;
+function stopKeepAwake() {
+  if (keepAwake) {
+    keepAwake.child.kill();
+    keepAwake = null;
+  }
+}
+
 // The action name from a request is only used to look up an entry here.
 const ACTIONS = {
+  say: async (params) => {
+    const uid = await consoleUID();
+    if (!uid) return null;
+    const text = String(params.text || '').slice(0, 500);
+    if (!text) throw new Error('nothing to say');
+    return sh('/bin/launchctl', ['asuser', uid, '/usr/bin/say', text], 60000);
+  },
+  keepawake: async (params) => {
+    const minutes = Math.max(1, Math.min(24 * 60, Math.round(Number(params.minutes) || 60)));
+    stopKeepAwake();
+    const child = spawn('/usr/bin/caffeinate', ['-d', '-i', '-s', '-t', String(minutes * 60)], { stdio: 'ignore' });
+    keepAwake = { child, until: Date.now() + minutes * 60000 };
+    child.on('exit', () => {
+      if (keepAwake && keepAwake.child === child) keepAwake = null;
+    });
+    return `awake for ${minutes} min`;
+  },
+  allowsleep: async () => {
+    stopKeepAwake();
+    return 'sleep allowed';
+  },
   sleep: async () => sh('/usr/bin/pmset', ['sleepnow'], 5000),
   displaysleep: async () => sh('/usr/bin/pmset', ['displaysleepnow'], 5000),
   lock: async () => {
@@ -427,8 +582,10 @@ async function runAction(name, params) {
     return { ok: true, action: 'command', name: key, output: out.trim().slice(0, 2000) };
   }
   if (!Object.prototype.hasOwnProperty.call(ACTIONS, name)) throw new Error(`unknown action: ${name}`);
-  if (!config.allowActions[name]) throw new Error(`action disabled: ${name} (enable it in config.json)`);
-  if ((name === 'lock' || name === 'notify') && !(await consoleUID())) {
+  // allowsleep only undoes keepawake, so it shares its switch.
+  const permission = name === 'allowsleep' ? 'keepawake' : name;
+  if (!config.allowActions[permission]) throw new Error(`action disabled: ${permission} (enable it in config.json)`);
+  if (['lock', 'notify', 'say'].includes(name) && !(await consoleUID())) {
     throw new Error('no user is logged in on this Mac');
   }
   const result = await ACTIONS[name](params || {});
@@ -481,7 +638,7 @@ const server = http.createServer(async (req, res) => {
       ok: true,
       service: 'homey-mac-agent',
       name: staticInfo ? staticInfo.computerName : os.hostname(),
-      version: '1.0.0'
+      version: AGENT_VERSION
     });
   }
 
@@ -495,6 +652,10 @@ const server = http.createServer(async (req, res) => {
       snapshot.updates = updateCache;
     }
     return send(res, 200, snapshot);
+  }
+
+  if (url.pathname === '/processes' && req.method === 'GET') {
+    return send(res, 200, await listProcesses());
   }
 
   if (url.pathname === '/action' && req.method === 'POST') {
@@ -531,7 +692,7 @@ function advertiseBonjour() {
   bonjour = spawn(
     '/usr/bin/dns-sd',
     ['-R', name, '_homeymac._tcp', 'local', String(config.port),
-     `id=${id}`, `name=${name}`, `ver=1.0.0`],
+     `id=${id}`, `name=${name}`, `ver=${AGENT_VERSION}`],
     { stdio: 'ignore' }
   );
   bonjour.on('error', (e) => log('could not start dns-sd: ' + e.message));
@@ -555,6 +716,9 @@ async function main() {
   setInterval(() => refreshSnapshot().catch((e) => log('snapshot failed: ' + e.message)),
     Math.max(5, config.pollSeconds) * 1000);
 
+  readSlowInfo().catch(() => {});
+  setInterval(() => readSlowInfo().catch(() => {}), 10 * 60 * 1000);
+
   // Delay the first update check so startup stays fast.
   setTimeout(() => checkUpdates().catch(() => {}), 60000);
   setInterval(() => {
@@ -574,6 +738,7 @@ async function main() {
 
 process.on('SIGTERM', () => {
   shuttingDown = true;
+  stopKeepAwake();
   clearTimeout(bonjourRetry);
   if (bonjour) bonjour.kill();
   server.close(() => process.exit(0));

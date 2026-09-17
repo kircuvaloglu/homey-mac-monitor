@@ -1,0 +1,11 @@
+{
+  "type": "string",
+  "title": {
+    "en": "Last backup"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "insights": false,
+  "icon": "/assets/capabilities/backup.svg"
+}

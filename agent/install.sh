@@ -37,23 +37,25 @@ if ! "$NODE" -e 'process.exit(parseInt(process.versions.node) >= 18 ? 0 : 1)'; t
 fi
 echo "node        : $NODE ($("$NODE" -v))"
 
-# Sensor binary
-# Use the bundled binary; build from source only when it is missing and the
+# Helper binaries
+# Use the bundled binaries; build from source only when one is missing and the
 # developer tools are installed (the swiftc shim alone would open an install prompt).
 mkdir -p "$INSTALL_DIR"
-if [[ -f "$SRC/macsensors" ]]; then
-  echo "macsensors  : installing bundled binary"
-  cp "$SRC/macsensors" "$INSTALL_DIR/macsensors"
-  # Downloaded files are quarantined, and Gatekeeper blocks unsigned binaries.
-  xattr -d com.apple.quarantine "$INSTALL_DIR/macsensors" 2>/dev/null || true
-  codesign -s - --force "$INSTALL_DIR/macsensors" 2>/dev/null || true
-elif xcode-select -p >/dev/null 2>&1 && [[ -f "$SRC/src/macsensors.swift" ]]; then
-  echo "macsensors  : building..."
-  swiftc -O -o "$INSTALL_DIR/macsensors" "$SRC/src/macsensors.swift"
-else
-  echo "WARNING: macsensors missing. Temperature and fan data will be unavailable." >&2
-fi
-[[ -f "$INSTALL_DIR/macsensors" ]] && chmod 755 "$INSTALL_DIR/macsensors"
+for name in macsensors macsession; do
+  if [[ -f "$SRC/$name" ]]; then
+    echo "$(printf '%-12s' "$name"): installing bundled binary"
+    cp "$SRC/$name" "$INSTALL_DIR/$name"
+    # Downloaded files are quarantined, and Gatekeeper blocks unsigned binaries.
+    xattr -d com.apple.quarantine "$INSTALL_DIR/$name" 2>/dev/null || true
+    codesign -s - --force "$INSTALL_DIR/$name" 2>/dev/null || true
+  elif xcode-select -p >/dev/null 2>&1 && [[ -f "$SRC/src/$name.swift" ]]; then
+    echo "$(printf '%-12s' "$name"): building..."
+    swiftc -O -o "$INSTALL_DIR/$name" "$SRC/src/$name.swift"
+  else
+    echo "WARNING: $name missing. Some readings will be unavailable." >&2
+  fi
+  [[ -f "$INSTALL_DIR/$name" ]] && chmod 755 "$INSTALL_DIR/$name"
+done
 
 cp "$SRC/agent.js" "$INSTALL_DIR/agent.js"
 cp "$SRC/uninstall.sh" "$INSTALL_DIR/uninstall.sh"
@@ -77,6 +79,8 @@ else
     "displaysleep": true,
     "lock": true,
     "notify": true,
+    "say": true,
+    "keepawake": true,
     "restart": false,
     "shutdown": false
   },

@@ -18,7 +18,7 @@ Homey Pro --HTTP + bearer token--> agent on the Mac --SMC / IOKit--> sensors
 
 - The agent only reads the SMC. There is no SMC write call (`kSMCWriteKey`) and
   no fan control, and there should never be.
-- Apple silicon only (macOS 14 or later).
+- Apple silicon only (macOS 14 or later), aimed at desktop Macs.
 - Restart and shutdown stay disabled unless the user enables them on both sides.
 
 ## Macs on several networks
@@ -89,6 +89,20 @@ limits API calls, so space out repeated installs and API requests.
   address, even through a child `ifconfig`. As a root LaunchDaemon the real
   addresses come through. Wake-on-LAN depends on this.
 
+**Session data**
+
+- The display state belongs to the logged-in user's session. The agent runs
+  `macsession` with `launchctl asuser <uid>`, which checks `CGDisplayIsAsleep`.
+- Idle time comes from `HIDIdleTime` (`ioreg -c IOHIDSystem`), the lock state from
+  `CGSSessionScreenIsLocked` in `IOConsoleUsers` (`ioreg -n Root -d1`).
+- Memory pressure is `kern.memorystatus_vm_pressure_level` (1, 2, 4), the thermal
+  state is `ProcessInfo.thermalState`, disk health is the SMART status from
+  `diskutil info disk0`.
+- Time Machine dates are read with `plutil -p` from
+  `/Library/Preferences/com.apple.TimeMachine.plist`; `plutil -convert json`
+  fails on the date values.
+- Network speed is the byte counter delta of the `en*` link rows in `netstat -ibn`.
+
 **Homey pairing view**
 
 These details come from Homey's own `/pair/` page and `/js/homey.drivers.js`;
@@ -149,6 +163,7 @@ the documentation does not cover them.
 
 ```
 homey-mac-monitor/
+├── CHANGELOG.md             release notes
 ├── DEVELOPMENT.md           this file
 ├── README.md                setup, architecture, HTTP API
 ├── agent/                   Mac side
@@ -157,7 +172,8 @@ homey-mac-monitor/
 │   ├── uninstall.sh
 │   ├── build.sh             builds the bundled sensor reader
 │   ├── macsensors           compiled sensor reader (arm64)
-│   └── src/macsensors.swift sensor reader source
+│   ├── macsession           compiled session reader (arm64)
+│   └── src/                 Swift sources of both helpers
 ├── LICENSE
 ├── app/                     Homey app (SDK v3)
 │   ├── .homeycompose/       app manifest, capabilities, discovery
