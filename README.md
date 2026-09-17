@@ -200,7 +200,7 @@ homey app install
 - `agent/macsensors --all` lists every SMC key, which helps when mapping the
   sensors of a new Mac model.
 
-More notes are in [DEVELOPMENT.md](DEVELOPMENT.md).
+More notes are in [DEVELOPMENT.md](DEVELOPMENT.md). Questions and feedback: [Homey Community topic](https://community.homey.app/t/159695).
 
 ## License
 
