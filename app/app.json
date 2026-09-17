@@ -33,6 +33,13 @@
   "bugs": {
     "url": "https://github.com/kircuvaloglu/homey-mac-monitor/issues"
   },
+  "contributing": {
+    "donate": {
+      "paypal": {
+        "username": "GurayKircuvaloglu"
+      }
+    }
+  },
   "flow": {
     "triggers": [
       {
