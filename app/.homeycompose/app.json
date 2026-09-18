@@ -1,6 +1,6 @@
 {
   "id": "com.kircuvaloglu.macmonitor",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "compatibility": ">=12.1.0",
   "sdk": 3,
   "platforms": [
@@ -10,7 +10,7 @@
     "en": "Mac Monitor"
   },
   "description": {
-    "en": "Monitor and control your Macs from Homey: temperatures, CPU, memory, disk, network, activity and backups, with Flows to sleep, wake, lock, notify, restart or shut down."
+    "en": "Keep your Mac cool, healthy and part of your home"
   },
   "category": [
     "tools"

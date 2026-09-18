@@ -81,13 +81,15 @@
     if (!list || !list.length) return;
     $('found').style.display = 'block';
     const box = $('foundList');
-    box.innerHTML = '';
+    box.replaceChildren();
     list.forEach((d) => {
       const b = document.createElement('button');
       b.className = 'mac';
-      b.innerHTML = '<strong></strong><span></span>';
-      b.querySelector('strong').textContent = d.name || d.host;
-      b.querySelector('span').textContent = d.host + ':' + d.port;
+      const name = document.createElement('strong');
+      name.textContent = d.name || d.host;
+      const address = document.createElement('span');
+      address.textContent = d.host + ':' + d.port;
+      b.append(name, address);
       b.onclick = () => {
         $('host').value = d.host;
         $('port').value = d.port;

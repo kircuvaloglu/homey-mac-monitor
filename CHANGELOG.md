@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.1
+
+- Pairing screen builds its list with DOM elements instead of HTML strings
+- Shorter App Store text, a tagline, photos instead of illustrations and
+  text-free widget previews
+
 ## 1.5.0
 
 ### Added
