@@ -1,6 +1,6 @@
 {
   "id": "com.kircuvaloglu.macmonitor",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "compatibility": ">=12.1.0",
   "sdk": 3,
   "platforms": [

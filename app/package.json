@@ -1,6 +1,6 @@
 {
   "name": "com.kircuvaloglu.macmonitor",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "main": "app.js",
   "private": true,
   "license": "MIT",
