@@ -93,30 +93,51 @@
   var settings = { refreshSeconds: 20, showFooter: true };
   var HomeyRef = null;
   var isReady = false;
+  var SVG_NS = 'http://www.w3.org/2000/svg';
 
+  // Icons as shape lists, so everything on screen is built with DOM calls.
   var ICONS = {
-    cpu: '<rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/>' +
-         '<path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/>',
-    memory: '<rect x="2" y="7" width="20" height="10" rx="2"/><path d="M6 11v2M10 11v2M14 11v2M18 11v2M5 17v2M19 17v2"/>',
-    temperature: '<path d="M14 14.8V5a2 2 0 0 0-4 0v9.8a4 4 0 1 0 4 0z"/><path d="M12 11v6"/>',
-    fan: '<circle cx="12" cy="12" r="2"/><path d="M12 10c0-4 1-7 4-7 2 0 2.5 3 0 5l-2.3 2.6"/>' +
-         '<path d="M14 12c4 0 7 1 7 4 0 2-3 2.5-5 0l-2.6-2.3"/><path d="M12 14c0 4-1 7-4 7-2 0-2.5-3 0-5l2.3-2.6"/>' +
-         '<path d="M10 12c-4 0-7-1-7-4 0-2 3-2.5 5 0l2.6 2.3"/>',
-    power: '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
-    storage: '<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
-    refresh: '<path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/>',
-    network: '<path d="M7 3v14M3 13l4 4 4-4M17 21V7M13 11l4-4 4 4"/>'
+    cpu: [['rect', { x: 6, y: 6, width: 12, height: 12, rx: 2 }],
+          ['rect', { x: 9.5, y: 9.5, width: 5, height: 5, rx: 1 }],
+          ['path', { d: 'M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3' }]],
+    memory: [['rect', { x: 2, y: 7, width: 20, height: 10, rx: 2 }],
+             ['path', { d: 'M6 11v2M10 11v2M14 11v2M18 11v2M5 17v2M19 17v2' }]],
+    temperature: [['path', { d: 'M14 14.8V5a2 2 0 0 0-4 0v9.8a4 4 0 1 0 4 0z' }],
+                  ['path', { d: 'M12 11v6' }]],
+    fan: [['circle', { cx: 12, cy: 12, r: 2 }],
+          ['path', { d: 'M12 10c0-4 1-7 4-7 2 0 2.5 3 0 5l-2.3 2.6' }],
+          ['path', { d: 'M14 12c4 0 7 1 7 4 0 2-3 2.5-5 0l-2.6-2.3' }],
+          ['path', { d: 'M12 14c0 4-1 7-4 7-2 0-2.5-3 0-5l2.3-2.6' }],
+          ['path', { d: 'M10 12c-4 0-7-1-7-4 0-2 3-2.5 5 0l2.6 2.3' }]],
+    power: [['path', { d: 'M13 2 4 14h7l-1 8 9-12h-7z' }]],
+    storage: [['ellipse', { cx: 12, cy: 5, rx: 8, ry: 3 }],
+              ['path', { d: 'M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5' }],
+              ['path', { d: 'M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3' }]],
+    network: [['path', { d: 'M7 3v14M3 13l4 4 4-4M17 21V7M13 11l4-4 4 4' }]],
+    refresh: [['path', { d: 'M20 12a8 8 0 1 1-2.3-5.7' }], ['path', { d: 'M20 4v5h-5' }]]
   };
 
-  function svg(name) {
-    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
-           'stroke-linecap="round" stroke-linejoin="round">' + ICONS[name] + '</svg>';
+  function el(tag, className, text) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined && text !== null) node.textContent = String(text);
+    return node;
   }
 
-  function esc(s) {
-    return String(s).replace(/[&<>"']/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  function icon(name) {
+    var svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '2');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.setAttribute('stroke-linejoin', 'round');
+    ICONS[name].forEach(function (shape) {
+      var node = document.createElementNS(SVG_NS, shape[0]);
+      Object.keys(shape[1]).forEach(function (key) { node.setAttribute(key, shape[1][key]); });
+      svg.appendChild(node);
     });
+    return svg;
   }
 
   function isNum(v) {
@@ -134,24 +155,38 @@
 
   // color: palette name (purple, blue, green, amber); percent: bar fill, or null for no bar
   function tile(o) {
-    var tone = o.tone ? ' ' + o.tone : '';
-    var wide = o.wide ? ' wide' : '';
-    var bar = '';
+    var box = el('div', 'tile' + (o.tone ? ' ' + o.tone : '') + (o.wide ? ' wide' : ''));
+
+    var row = el('div', 'row');
+    var iconBox = el('div', 'icon');
+    iconBox.style.color = 'var(--' + o.color + ')';
+    iconBox.style.background = 'var(--' + o.color + '-tint)';
+    iconBox.appendChild(icon(o.icon));
+
+    var text = el('div');
+    text.style.minWidth = '0';
+    var unit = o.unit || '';
+    var value = el('div', 'value' + (String(o.value).length + unit.length > 7 ? ' long' : ''), o.value);
+    if (unit) value.appendChild(el('span', 'unit', unit));
+    var label = el('div', 'label', o.label);
+    if (o.extra) label.appendChild(el('span', 'extra', '· ' + o.extra));
+    text.append(value, label);
+    row.append(iconBox, text);
+    box.appendChild(row);
+
     if (o.percent !== null && o.percent !== undefined) {
-      bar = '<div class="bar"><div class="fill" style="width:' + clamp(o.percent).toFixed(1) + '%;background:' +
-            (o.barFill || 'var(--' + o.color + ')') + '"></div></div>';
+      var bar = el('div', 'bar');
+      var fill = el('div', 'fill');
+      fill.style.width = clamp(o.percent).toFixed(1) + '%';
+      fill.style.background = o.barFill || 'var(--' + o.color + ')';
+      bar.appendChild(fill);
+      box.appendChild(bar);
     }
-    var extra = o.extra ? '<span class="extra">· ' + esc(o.extra) + '</span>' : '';
-    return '<div class="tile' + tone + wide + '">' +
-             '<div class="row">' +
-               '<div class="icon" style="color:var(--' + o.color + ');background:var(--' + o.color + '-tint)">' +
-                 svg(o.icon) + '</div>' +
-               '<div style="min-width:0">' +
-                 '<div class="value' + (String(o.value).length + (o.unit || '').length > 7 ? ' long' : '') + '">' + esc(o.value) + (o.unit ? '<span class="unit">' + esc(o.unit) + '</span>' : '') + '</div>' +
-                 '<div class="label">' + esc(o.label) + extra + '</div>' +
-               '</div>' +
-             '</div>' + bar +
-           '</div>';
+    return box;
+  }
+
+  function badge(text, tone) {
+    return el('span', tone ? 'badge ' + tone : '', text);
   }
 
   function renderMac(mac) {
@@ -199,35 +234,45 @@
     }
     // A half tile left on its own takes the full width.
     if (tiles.length % 2) tiles[tiles.length - 1].wide = true;
-    tiles = tiles.concat(wide).map(tile);
 
-    var foot = '';
+    var card = el('div', 'mac' + (mac.available ? '' : ' offline'));
+    card.dataset.id = mac.id;
+
+    var head = el('div', 'head');
+    var headText = el('div', 'head-text');
+    headText.appendChild(el('div', 'name', mac.name));
+    var status = el('div', 'status');
+    status.append(el('span', 'dot'), el('span', null, mac.available ? 'Online' : 'Offline'));
+    if (mac.lastUpdated) status.appendChild(el('span', null, '· Updated ' + time(mac.lastUpdated)));
+    headText.appendChild(status);
+
+    var button = el('button', 'refresh');
+    button.type = 'button';
+    button.setAttribute('aria-label', 'Refresh');
+    button.appendChild(icon('refresh'));
+    head.append(headText, button);
+
+    var grid = el('div', 'grid');
+    tiles.concat(wide).forEach(function (o) { grid.appendChild(tile(o)); });
+    card.append(head, grid);
+
     if (settings.showFooter) {
       var parts = [];
-      if (isNum(mac.power) && isNum(mac.fanRpm)) parts.push('<span>Power ' + mac.power.toFixed(1) + ' W</span>');
-      if (mac.uptime && mac.uptime !== '-') parts.push('<span>Uptime ' + esc(mac.uptime) + '</span>');
-      if (mac.locked) parts.push('<span>Locked</span>');
-      else if (isNum(mac.idle) && mac.idle >= 5) parts.push('<span>Idle ' + mac.idle + ' min</span>');
-      if (mac.throttled) parts.push('<span class="badge crit">Throttling</span>');
+      if (isNum(mac.power) && isNum(mac.fanRpm)) parts.push(badge('Power ' + mac.power.toFixed(1) + ' W'));
+      if (mac.uptime && mac.uptime !== '-') parts.push(badge('Uptime ' + mac.uptime));
+      if (mac.locked) parts.push(badge('Locked'));
+      else if (isNum(mac.idle) && mac.idle >= 5) parts.push(badge('Idle ' + mac.idle + ' min'));
+      if (mac.throttled) parts.push(badge('Throttling', 'crit'));
       if (isNum(mac.updates) && mac.updates > 0) {
-        parts.push('<span class="badge warn">' + mac.updates + (mac.updates === 1 ? ' update' : ' updates') + '</span>');
+        parts.push(badge(mac.updates + (mac.updates === 1 ? ' update' : ' updates'), 'warn'));
       }
-      if (parts.length) foot = '<div class="foot">' + parts.join('') + '</div>';
+      if (parts.length) {
+        var foot = el('div', 'foot');
+        foot.append.apply(foot, parts);
+        card.appendChild(foot);
+      }
     }
-
-    var state = mac.available ? 'Online' : 'Offline';
-    var updated = mac.lastUpdated ? '<span>· Updated ' + time(mac.lastUpdated) + '</span>' : '';
-
-    return '<div class="mac' + (mac.available ? '' : ' offline') + '" data-id="' + esc(mac.id) + '">' +
-             '<div class="head">' +
-               '<div class="head-text">' +
-                 '<div class="name">' + esc(mac.name) + '</div>' +
-                 '<div class="status"><span class="dot"></span><span>' + state + '</span>' + updated + '</div>' +
-               '</div>' +
-               '<button class="refresh" type="button" aria-label="Refresh">' + svg('refresh') + '</button>' +
-             '</div>' +
-             '<div class="grid">' + tiles.join('') + '</div>' + foot +
-           '</div>';
+    return card;
   }
 
   function fitHeight() {
@@ -236,22 +281,31 @@
     HomeyRef.setHeight(h).catch(function () {});
   }
 
+  function message(lines) {
+    var box = el('div', 'empty');
+    lines.forEach(function (line, i) {
+      if (i) box.appendChild(document.createElement('br'));
+      box.appendChild(document.createTextNode(line));
+    });
+    return box;
+  }
+
   var current = [];
 
   function render(macs) {
     current = macs || [];
     var list = document.getElementById('list');
     if (!current.length) {
-      list.innerHTML = '<div class="empty">No Macs added yet.<br>Add device → Mac Monitor</div>';
+      list.replaceChildren(message(['No Macs added yet.', 'Add device → Mac Monitor']));
     } else {
-      list.innerHTML = current.map(renderMac).join('');
+      list.replaceChildren.apply(list, current.map(renderMac));
     }
     fitHeight();
   }
 
   function showError(err) {
-    document.getElementById('list').innerHTML =
-      '<div class="empty">Could not load data<br>' + esc(err && err.message ? err.message : err) + '</div>';
+    document.getElementById('list').replaceChildren(
+      message(['Could not load data', err && err.message ? err.message : String(err)]));
     fitHeight();
   }
 
@@ -265,7 +319,7 @@
     var button = e.target.closest('.refresh');
     if (!button || button.classList.contains('busy')) return;
     var card = button.closest('.mac');
-    var id = card.getAttribute('data-id');
+    var id = card.dataset.id;
     button.classList.add('busy');
     HomeyRef.api('POST', '/refresh', { id: id })
       .then(function (mac) {
