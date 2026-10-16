@@ -1,4 +1,7 @@
 {
+  "1.6.0": {
+    "en": "Redrawn icons that show correctly everywhere in Homey, instead of as plain blocks. A Mac that moves to another address is picked up again on its own, and adding a Mac now warns when it answers on a network your Homey cannot reach."
+  },
   "1.5.2": {
     "en": "Idle time, screen lock and display state, network speed, memory pressure, thermal state, disk health, Time Machine backups and external drives, each with its own Flow cards. New actions to keep the Mac awake, let it sleep again and speak text. Cleaner pairing screen and widget."
   },

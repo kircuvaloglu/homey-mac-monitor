@@ -10,7 +10,8 @@
          border: 1px solid #dfe3ea; border-radius: 10px; background: #fff;
          font-size: 14px; text-align: left; }
   .mac:hover { border-color: #38d6e0; background: #f6fdfe; }
-  .mac span { color: #8a92a3; font-size: 12px; }
+  .mac span { color: #8a92a3; font-size: 12px; white-space: nowrap; margin-left: 10px; }
+  .mac em { display: block; font-style: normal; font-size: 11px; color: #a4701f; margin-top: 2px; }
   label { display: block; font-size: 13px; font-weight: 600; margin: 0 0 5px; }
   input { width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 14px;
           border: 1px solid #dfe3ea; border-radius: 10px; background: #fff; }
@@ -19,9 +20,12 @@
   .row > div:first-child { flex: 1 1 auto; }
   .row > div:last-child { flex: 0 0 90px; }
   .field { margin-bottom: 14px; }
-  button.go { width: 100%; padding: 12px; border: 0; border-radius: 10px; cursor: pointer;
-              background: #38d6e0; color: #05343a; font-size: 15px; font-weight: 600; }
-  button.go:disabled { opacity: .55; cursor: default; }
+  .wrap button.go { width: 100%; padding: 14px; border: 0; border-radius: 10px; cursor: pointer;
+              background: #0b84ff !important; color: #ffffff !important; font-size: 15px;
+              font-weight: 600; line-height: 1.2; -webkit-appearance: none; appearance: none;
+              box-shadow: 0 2px 8px rgba(11, 132, 255, .35); }
+  .wrap button.go:disabled { opacity: .55; cursor: default; box-shadow: none; }
+  .step { color: #7c8598; font-size: 12px; text-align: center; margin: 8px 0 0; }
   .msg { margin-top: 14px; padding: 11px 13px; border-radius: 10px; font-size: 13px;
          line-height: 1.45; display: none; }
   .msg.err { display: block; background: #fdecec; color: #8c2b2b; }
@@ -53,6 +57,7 @@
   </div>
 
   <button class="go" id="go"></button>
+  <p class="step" id="step"></p>
   <div class="msg" id="msg"></div>
 </div>
 
@@ -77,6 +82,12 @@
     m.textContent = text;
   }
 
+  function select(mac) {
+    $('host').value = mac.host;
+    $('port').value = mac.port;
+    $('token').focus();
+  }
+
   function renderDiscovered(list) {
     if (!list || !list.length) return;
     $('found').style.display = 'block';
@@ -85,18 +96,25 @@
     list.forEach((d) => {
       const b = document.createElement('button');
       b.className = 'mac';
+      const left = document.createElement('div');
       const name = document.createElement('strong');
       name.textContent = d.name || d.host;
+      left.append(name);
+      // A Mac on a second network is announced on an address Homey cannot reach.
+      if (d.reachable === false) {
+        const note = document.createElement('em');
+        note.textContent = t('pair.unreachable', 'Your Homey cannot reach this address');
+        left.append(note);
+      }
       const address = document.createElement('span');
       address.textContent = d.host + ':' + d.port;
-      b.append(name, address);
-      b.onclick = () => {
-        $('host').value = d.host;
-        $('port').value = d.port;
-        $('token').focus();
-      };
+      b.append(left, address);
+      b.onclick = () => select(d);
       box.appendChild(b);
     });
+
+    const reachable = list.filter((d) => d.reachable !== false);
+    if (reachable.length === 1) select(reachable[0]);
   }
 
   async function connect() {
@@ -118,9 +136,15 @@
       $('go').disabled = false;
     }
 
+    // Stay on this screen unless the Mac really answered.
+    if (result.error || !result.name) {
+      show('err', result.error || t('pair.error.failed', 'Could not connect to that Mac.'));
+      return;
+    }
+
     show('ok', [result.name, result.model, result.os].filter(Boolean).join(' · '));
     // The repair flow has no next view.
-    setTimeout(() => (result.repaired ? Homey.done() : Homey.nextView()), 700);
+    setTimeout(() => (result.repaired ? Homey.done() : Homey.showView('list_devices')), 700);
   }
 
   $('intro').textContent = t('pair.intro',
@@ -135,6 +159,7 @@
   $('lblPort').textContent = t('pair.port', 'Port');
   $('lblToken').textContent = t('pair.token', 'Token');
   $('go').textContent = t('pair.connect', 'Connect');
+  $('step').textContent = t('pair.step', 'Paste the token, then tap Connect.');
   $('go').onclick = connect;
   $('token').addEventListener('keydown', (e) => { if (e.key === 'Enter') connect(); });
 

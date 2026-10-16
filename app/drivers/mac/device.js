@@ -1,7 +1,7 @@
 'use strict';
 
 const Homey = require('homey');
-const { getStatus, checkUpdates, runAction, getProcesses } = require('../../lib/agent-api');
+const { getStatus, checkUpdates, runAction, getProcesses, ping } = require('../../lib/agent-api');
 const wol = require('../../lib/wake-on-lan');
 
 // A single missed poll is normal for a busy or sleeping Mac.
@@ -72,6 +72,38 @@ module.exports = class MacDevice extends Homey.Device {
     }
   }
 
+  // Homey matches a device to its agent by the serial number in the Bonjour record.
+  onDiscoveryResult(result) {
+    return result.id === this.getData().id;
+  }
+
+  async onDiscoveryAvailable(result) {
+    await this.followAddress(result);
+  }
+
+  async onDiscoveryAddressChanged(result) {
+    await this.followAddress(result);
+  }
+
+  // Follows the Mac when it gets another address, but only while the known address
+  // has stopped answering: a Mac on two networks is also announced on the address
+  // Homey cannot reach, and that address must not replace a working one.
+  async followAddress(result) {
+    const host = result && result.address;
+    if (!host || !this.offline || host === this.getSetting('host')) return;
+    const port = result.port || this.getSetting('port') || 8787;
+
+    try {
+      await ping({ host, port, timeout: 4000 });
+    } catch (err) {
+      return;
+    }
+
+    this.log(`Now at ${host}:${port}`);
+    await this.setSettings({ host, port }).catch((err) => this.error('Could not store the address', err));
+    this.restartPolling();
+  }
+
   connection() {
     return {
       host: this.getSetting('host'),
@@ -117,14 +149,32 @@ module.exports = class MacDevice extends Homey.Device {
     await this.handleStatus(status);
   }
 
+  // A device belongs to one Mac, identified by its serial number. After a swap or a
+  // changed address another Mac can end up answering here, and its readings must not
+  // pass as this one's without a word.
+  async checkIdentity(status) {
+    const serial = (status.system || {}).serial;
+    const id = this.getData().id;
+    // Devices added before the serial was used as the id carry "host:port" instead.
+    if (!serial || !id || id.includes(':') || serial === id) {
+      this.wrongMac = false;
+      return;
+    }
+    if (this.wrongMac) return;
+    this.wrongMac = true;
+    this.log(`Another Mac answers at ${this.getSetting('host')}: ${serial} instead of ${id}`);
+    await this.setWarning(this.homey.__('device.otherMac')).catch(() => {});
+  }
+
   async handleStatus(status) {
     this.failures = 0;
     this.sleepRequestedAt = 0;
     this.lastUpdated = Date.now();
     if (this.offline) {
       this.offline = false;
-      await this.unsetWarning().catch(() => {});
+      if (!this.wrongMac) await this.unsetWarning().catch(() => {});
     }
+    await this.checkIdentity(status);
     if (!this.online) {
       this.online = true;
       this.fire('came_online');

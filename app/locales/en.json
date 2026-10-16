@@ -6,7 +6,8 @@
   },
   "device": {
     "unreachable": "The Mac is not responding. Is it asleep, or is the agent stopped?",
-    "asleep": "The Mac is asleep."
+    "asleep": "The Mac is asleep.",
+    "otherMac": "Another Mac is answering at this address. Repair the device to point it at the right Mac, or add the other Mac as its own device."
   },
   "pair": {
     "intro": "Install the Mac Monitor agent on your Mac first. The installer prints the access token you enter below.",
@@ -20,9 +21,12 @@
       "noHost": "Please enter an address.",
       "noToken": "Please enter the token.",
       "badToken": "The token is not accepted by that Mac.",
-      "unreachable": "Could not reach the agent: __message__"
+      "unreachable": "Could not reach the agent at __host__: __message__. If the Mac is on more than one network, use the address your Homey can reach.",
+      "failed": "Could not connect to that Mac."
     },
-    "guide": "Installation guide"
+    "guide": "Installation guide",
+    "unreachable": "Your Homey cannot reach this address",
+    "step": "Paste the token, then tap Connect."
   },
   "action": {
     "powerNotAllowed": "Restart and shut down are not allowed for this Mac. Turn on \"Allow restart and shut down\" in the device settings.",

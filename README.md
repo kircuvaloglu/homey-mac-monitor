@@ -236,10 +236,11 @@ homey app install
 
 - `agent/build.sh` builds the bundled helpers: `macsensors` (SMC sensors) and
   `macsession` (display state).
-- `tools/make-images.py` makes the store images from photos and renders the
-  icons; `tools/cutout.swift` puts a photographed Mac on a white background for
-  the driver image. `tools/make-widget-preview.py` renders the widget previews.
-  The Python scripts need `pip install pillow resvg-py`.
+- `tools/make-icons.py` draws the app, driver and capability icons;
+  `tools/make-images.py` makes the store images from photos and
+  `tools/cutout.swift` puts a photographed Mac on a white background for the
+  driver image. `tools/make-widget-preview.py` renders the widget previews. The
+  Python scripts need `pip install pillow resvg-py`.
 - `agent/macsensors --all` lists every SMC key, which helps when mapping the
   sensors of a new Mac model.
 

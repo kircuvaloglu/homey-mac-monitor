@@ -117,14 +117,27 @@ module.exports = class MacDriver extends Homey.Driver {
     this.log('Mac driver initialized');
   }
 
-  getDiscovered() {
-    const results = this.getDiscoveryStrategy().getDiscoveryResults();
-    return Object.values(results).map((r) => ({
-      id: r.id,
-      host: r.address,
-      port: r.port,
-      name: (r.txt && r.txt.name) || r.name || r.host || r.address,
+  // A Mac that is on two networks is announced on both addresses, and only one of
+  // them may be routed to the Homey. Each address is therefore tried before it is
+  // offered, instead of guessing from the addresses themselves.
+  async getDiscovered() {
+    const results = Object.values(this.getDiscoveryStrategy().getDiscoveryResults());
+    const macs = await Promise.all(results.map(async (r) => {
+      const mac = {
+        id: r.id,
+        host: r.address,
+        port: r.port,
+        name: (r.txt && r.txt.name) || r.name || r.host || r.address,
+        reachable: true,
+      };
+      try {
+        await ping({ host: mac.host, port: mac.port, timeout: 3000 });
+      } catch (err) {
+        mac.reachable = false;
+      }
+      return mac;
     }));
+    return macs.sort((a, b) => Number(b.reachable) - Number(a.reachable));
   }
 
   connectionOptions(payload) {
@@ -140,7 +153,7 @@ module.exports = class MacDriver extends Homey.Driver {
       return await getStatus(opts);
     } catch (err) {
       if (err.statusCode === 401) throw new Error(this.homey.__('pair.error.badToken'));
-      throw new Error(this.homey.__('pair.error.unreachable', { message: err.message }));
+      throw new Error(this.homey.__('pair.error.unreachable', { host: opts.host, message: err.message }));
     }
   }
 
@@ -149,31 +162,39 @@ module.exports = class MacDriver extends Homey.Driver {
 
     session.setHandler('discovered', async () => {
       try {
-        return this.getDiscovered();
+        return await this.getDiscovered();
       } catch (err) {
         this.error('Discovery failed', err);
         return [];
       }
     });
 
+    // The reason is returned instead of thrown: a view does not always receive a
+    // thrown error, and it must never move on while the Mac is not connected.
     session.setHandler('connect', async (payload) => {
-      const opts = this.connectionOptions(payload);
-
-      // Ping first so a wrong address and a wrong token give different errors.
       try {
-        await ping(opts);
-      } catch (err) {
-        throw new Error(this.homey.__('pair.error.unreachable', { message: err.message }));
-      }
+        const opts = this.connectionOptions(payload);
 
-      const sys = (await this.fetchStatus(opts)).system || {};
-      pending = {
-        name: sys.computerName || sys.hostname || opts.host,
-        data: { id: sys.serial || `${opts.host}:${opts.port}` },
-        store: { token: opts.token },
-        settings: { host: opts.host, port: opts.port, pollInterval: 30 },
-      };
-      return { name: pending.name, model: sys.model || null, os: sys.os || null };
+        // Ping first so a wrong address and a wrong token give different errors.
+        try {
+          await ping(opts);
+        } catch (err) {
+          throw new Error(this.homey.__('pair.error.unreachable', { host: opts.host, message: err.message }));
+        }
+
+        const sys = (await this.fetchStatus(opts)).system || {};
+        pending = {
+          name: sys.computerName || sys.hostname || opts.host,
+          data: { id: sys.serial || `${opts.host}:${opts.port}` },
+          store: { token: opts.token },
+          settings: { host: opts.host, port: opts.port, pollInterval: 30 },
+        };
+        return { name: pending.name, model: sys.model || null, os: sys.os || null };
+      } catch (err) {
+        pending = null;
+        this.log(`Pairing failed: ${err.message}`);
+        return { error: err.message };
+      }
     });
 
     session.setHandler('list_devices', async () => (pending ? [pending] : []));
@@ -183,21 +204,26 @@ module.exports = class MacDriver extends Homey.Driver {
   async onRepair(session, device) {
     session.setHandler('discovered', async () => {
       try {
-        return this.getDiscovered();
+        return await this.getDiscovered();
       } catch {
         return [];
       }
     });
 
     session.setHandler('connect', async (payload) => {
-      const opts = this.connectionOptions(payload);
-      const sys = (await this.fetchStatus(opts)).system || {};
+      try {
+        const opts = this.connectionOptions(payload);
+        const sys = (await this.fetchStatus(opts)).system || {};
 
-      await device.setStoreValue('token', opts.token);
-      await device.setSettings({ host: opts.host, port: opts.port });
-      device.restartPolling();
+        await device.setStoreValue('token', opts.token);
+        await device.setSettings({ host: opts.host, port: opts.port });
+        device.restartPolling();
 
-      return { name: sys.computerName || opts.host, model: sys.model || null, os: sys.os || null, repaired: true };
+        return { name: sys.computerName || opts.host, model: sys.model || null, os: sys.os || null, repaired: true };
+      } catch (err) {
+        this.log(`Repair failed: ${err.message}`);
+        return { error: err.message };
+      }
     });
   }
 

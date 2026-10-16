@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.6.0
+
+### Fixed
+
+- Capability icons, the app icon and the device icon were drawn with strokes.
+  Homey fills every shape in an icon, so the closed ones arrived as solid
+  blocks. All icons are now drawn as filled outlines
+- A Mac that is given another address is found again automatically, instead of
+  staying unreachable until it is repaired by hand. The known address is only
+  replaced once it stops answering and the new one does answer
+
+### Changed
+
+- Adding a Mac points out an agent that answers on a network the Homey cannot
+  reach, and fills in the address when a single Mac is found
+- Icons are drawn by the new `tools/make-icons.py`
+
 ## 1.5.2
 
 - Pairing screen and widget build their content with DOM elements instead of

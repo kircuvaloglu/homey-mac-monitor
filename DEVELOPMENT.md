@@ -164,6 +164,19 @@ Points from the first review, worth keeping in mind for every release:
 - Widget previews are simple shapes on a transparent background, without text.
 - Icons are line drawings without gradients.
 
+**Icons**
+
+Homey paints capability icons and the device icon in its own colour and fills
+every shape it finds, so an icon drawn with strokes arrives as a solid block.
+Every icon is therefore drawn as a filled outline: `tools/make-icons.py` builds
+each one from a frame (outer edge clockwise, inner edge counter-clockwise, which
+the non-zero fill rule turns into a line) plus solid details. The icons carry no
+`fill`, `stroke` or size of their own, so Homey can colour them freely.
+
+```bash
+python3 tools/make-icons.py app
+```
+
 Photos are turned into store images with:
 
 ```bash
