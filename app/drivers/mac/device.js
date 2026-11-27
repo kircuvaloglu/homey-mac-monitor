@@ -7,6 +7,14 @@ const wol = require('../../lib/wake-on-lan');
 // A single missed poll is normal for a busy or sleeping Mac.
 const FAILURES_BEFORE_OFFLINE = 3;
 
+// The agent version this app is made for. Older agents keep working, but miss the
+// readings added since; the user is told once per Mac and agent version.
+const AGENT_LATEST = '1.7.0';
+
+// How often the apps chosen in "starts" and "stops" Flows are read again, in case
+// a change was not announced.
+const WATCH_LIST_MAX_AGE = 5 * 60 * 1000;
+
 // Not every Mac reports these: the GPU sensor is only powered while the GPU is
 // busy, fanless models have no fan, and the session values need a logged-in user. They are added once a value arrives and
 // removed if none has ever been seen on this Mac.
@@ -15,9 +23,32 @@ const OPTIONAL_CAPABILITIES = [
   'mac_screen_locked', 'mac_display_on', 'mac_idle',
   'mac_network_down', 'mac_network_up', 'mac_memory_pressure', 'mac_thermal_state',
   'mac_disk_health', 'mac_last_backup',
+  'mac_gpu_usage', 'mac_internet', 'mac_internet_latency',
 ];
 
 const has = (v) => v !== null && v !== undefined;
+const isBool = (v) => typeof v === 'boolean';
+
+// Compares dotted version numbers: negative when a is older than b.
+function compareVersions(a, b) {
+  const pa = String(a).split('.').map(Number);
+  const pb = String(b).split('.').map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const d = (pa[i] || 0) - (pb[i] || 0);
+    if (d) return d;
+  }
+  return 0;
+}
+
+// Addresses that may belong to this Mac on the home network: the network ports
+// (en0, en1, ...) with a private IPv4 address. Bridges for virtual machines and
+// VPN tunnels are left out, Homey cannot reach them.
+function homeAddresses(interfaces) {
+  const isPrivate = (ip) => /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(ip);
+  return (interfaces || [])
+    .filter((i) => /^en\d+$/.test(i.interface || '') && isPrivate(i.ip || ''))
+    .map((i) => i.ip);
+}
 const capitalize = (v) => (typeof v === 'string' && v ? v[0].toUpperCase() + v.slice(1) : v);
 
 module.exports = class MacDevice extends Homey.Device {
@@ -30,6 +61,8 @@ module.exports = class MacDevice extends Homey.Device {
     this.pollTimer = null;
     this.lastUpdated = null;
     this.sleepRequestedAt = 0;
+    this.watchList = [];
+    this.watchListAt = 0;
 
     await this.migrateCapabilities();
     // An unreachable Mac is shown with a warning instead of as unavailable, because Homey
@@ -140,13 +173,29 @@ module.exports = class MacDevice extends Homey.Device {
   }
 
   async poll() {
+    if (Date.now() - this.watchListAt > WATCH_LIST_MAX_AGE) await this.refreshWatchList().catch(() => {});
     let status;
     try {
-      status = await getStatus(this.connection());
+      status = await getStatus(this.connection(), { watch: this.watchList });
     } catch (err) {
       return this.onPollFailed(err);
     }
     await this.handleStatus(status);
+  }
+
+  // The apps chosen in this Mac's "starts" and "stops" Flows; only these are asked about.
+  async refreshWatchList() {
+    this.watchListAt = Date.now();
+    const names = new Set();
+    for (const card of Object.values(this.driver.appTriggers)) {
+      const flows = await card.getArgumentValues(this).catch(() => []);
+      for (const args of flows) {
+        const name = args && args.app && args.app.name;
+        // The agent takes a comma-separated list.
+        if (name && !String(name).includes(',')) names.add(String(name));
+      }
+    }
+    this.watchList = [...names].slice(0, 30);
   }
 
   // A device belongs to one Mac, identified by its serial number. After a swap or a
@@ -189,6 +238,7 @@ module.exports = class MacDevice extends Homey.Device {
 
   async onPollFailed(err) {
     this.failures += 1;
+    if (await this.tryOtherAddresses()) return;
     if (this.failures < FAILURES_BEFORE_OFFLINE || this.offline) return;
 
     this.offline = true;
@@ -197,6 +247,34 @@ module.exports = class MacDevice extends Homey.Device {
     await this.setWarning(this.homey.__(asleep ? 'device.asleep' : 'device.unreachable')).catch(() => {});
     this.fire('went_offline');
     this.log(`Unreachable: ${err.message}`);
+  }
+
+  // A Mac with both Ethernet and Wi-Fi has more than one address, and the one in use
+  // can stop answering while another still works. The addresses seen in earlier
+  // readings are asked at the same time, and the first one where this same Mac
+  // answers (checked by its serial number) is kept.
+  async tryOtherAddresses() {
+    const host = this.getSetting('host');
+    const id = this.getData().id;
+    const candidates = (this.getStoreValue('addresses') || []).filter((a) => a !== host);
+    if (!candidates.length || !id || id.includes(':')) return false;
+
+    const { port, token } = this.connection();
+    let found;
+    try {
+      found = await Promise.any(candidates.map(async (address) => {
+        const status = await getStatus({ host: address, port, token, timeout: 3000 }, { watch: this.watchList });
+        if ((status.system || {}).serial !== id) throw new Error('another Mac');
+        return { address, status };
+      }));
+    } catch (err) {
+      return false;
+    }
+
+    this.log(`Now at ${found.address}, ${host} stopped answering`);
+    await this.setSettings({ host: found.address }).catch((err) => this.error('Could not store the address', err));
+    await this.handleStatus(found.status);
+    return true;
   }
 
   // Skips unchanged values so Insights is not flooded with duplicates.
@@ -241,11 +319,31 @@ module.exports = class MacDevice extends Homey.Device {
     await this.setOptional('mac_last_backup', s.backup ? this.formatBackup(s.backup.lastBackup) : null);
     await this.set('mac_drives', Array.isArray(s.drives) ? s.drives.length : 0);
 
+    const internet = s.internet || {};
+    await this.setOptional('mac_gpu_usage', num((s.gpu || {}).usagePercent));
+    await this.setOptional('mac_internet', isBool(internet.online) ? internet.online : null);
+    // Without internet there is no latency; the last value must not linger in Insights.
+    if (internet.online === false) await this.set('mac_internet_latency', null);
+    else await this.setOptional('mac_internet_latency', num(internet.latencyMs));
+
     await this.updateInfoSettings(s);
     await this.rememberAgentDetails(s);
+    await this.checkAgentVersion(s.agentVersion);
     await this.runTriggers(s);
 
-    this.previous = this.stateOf(s);
+    // A reading without the watched apps (an update check, for example) keeps the
+    // last known state, so a start or stop is not missed.
+    const next = this.stateOf(s);
+    this.previous = { ...next, watched: next.watched || this.previous.watched || null };
+  }
+
+  async checkAgentVersion(version) {
+    if (!version || compareVersions(version, AGENT_LATEST) >= 0) return;
+    if (this.getStoreValue('agentNotified') === version) return;
+    await this.setStoreValue('agentNotified', version).catch(() => {});
+    await this.homey.notifications.createNotification({
+      excerpt: this.homey.__('device.agentOutdated', { name: this.getName(), version, latest: AGENT_LATEST }),
+    }).catch((err) => this.error('Could not send the notification', err));
   }
 
   stateOf(s) {
@@ -271,6 +369,10 @@ module.exports = class MacDevice extends Homey.Device {
       backupAgeHours: backup && backup.lastBackup
         ? Math.floor((Date.now() - Date.parse(backup.lastBackup)) / 3600000) : null,
       drives: Array.isArray(s.drives) ? s.drives : null,
+      gpuUsage: num((s.gpu || {}).usagePercent),
+      internetOnline: isBool((s.internet || {}).online) ? s.internet.online : null,
+      latencyMs: num((s.internet || {}).latencyMs),
+      watched: s.watched && typeof s.watched === 'object' ? s.watched : null,
       topProcess: ((s.topProcesses || [])[0] || {}).name || '-',
       updates: (s.updates || {}).count || 0,
       uptime: s.uptimeSeconds || 0,
@@ -293,8 +395,13 @@ module.exports = class MacDevice extends Homey.Device {
       await this.setStoreValue('commands', commands).catch(() => {});
     }
 
-    // Wake-on-LAN needs the interface Homey talks to, which is not always the default route.
     const net = s.network || {};
+    const addresses = homeAddresses(net.interfaces);
+    if (JSON.stringify(addresses) !== JSON.stringify(this.getStoreValue('addresses') || [])) {
+      await this.setStoreValue('addresses', addresses).catch(() => {});
+    }
+
+    // Wake-on-LAN needs the interface Homey talks to, which is not always the default route.
     const host = this.getSetting('host');
     const iface = (net.interfaces || []).find((i) => i.ip === host) || net.primary;
     if (iface && wol.parseMac(iface.mac)) {
@@ -354,6 +461,16 @@ module.exports = class MacDevice extends Homey.Device {
     if (cur.updates > p.updates) {
       const names = ((s.updates || {}).items || []).map((i) => i.title).join(', ');
       this.fire('updates_found', { count: cur.updates, names: names || '-' });
+    }
+    if (isBool(p.internetOnline) && isBool(cur.internetOnline) && p.internetOnline !== cur.internetOnline) {
+      this.fire(cur.internetOnline ? 'internet_up' : 'internet_down');
+    }
+    if (p.watched && cur.watched) {
+      for (const [name, running] of Object.entries(cur.watched)) {
+        if (!isBool(p.watched[name]) || p.watched[name] === running) continue;
+        const card = this.driver.appTriggers[running ? 'started' : 'stopped'];
+        card.trigger(this, { name }, { name }).catch(() => {});
+      }
     }
     // Uptime going backwards means the Mac restarted.
     if (cur.uptime > 0 && p.uptime > 0 && cur.uptime < p.uptime) {
@@ -478,6 +595,7 @@ module.exports = class MacDevice extends Homey.Device {
       info_mac: net.mac || '-',
       info_bootedAt: s.bootedAt ? this.formatDate(s.bootedAt) : '-',
       info_updates: updates.checkedAt ? `${updates.count} (checked ${this.formatDate(updates.checkedAt)})` : '-',
+      info_agent: s.agentVersion || '-',
     };
 
     const changed = {};

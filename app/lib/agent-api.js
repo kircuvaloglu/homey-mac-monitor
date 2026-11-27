@@ -51,7 +51,11 @@ function request({ host, port = 8787, token = null, path = '/status', method = '
   });
 }
 
-const getStatus = (opts) => request({ ...opts, path: '/status' });
+// watch: app or process names whose running state should be included.
+const getStatus = (opts, { watch = [] } = {}) => request({
+  ...opts,
+  path: watch.length ? `/status?watch=${watch.map(encodeURIComponent).join(',')}` : '/status',
+});
 // softwareupdate can take a minute or more.
 const checkUpdates = (opts) => request({ ...opts, path: '/status?updates=refresh', timeout: 180000 });
 const ping = (opts) => request({ ...opts, path: '/ping', token: null, timeout: opts.timeout || 4000 });

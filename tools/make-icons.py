@@ -74,11 +74,11 @@ def circle(cx, cy, r, cw=True):
             f"A{f(r)},{f(r)} 0 0 {s} {f(cx - r)},{f(cy)}Z")
 
 
-def ellipse(cx, cy, rx, ry, angle):
+def ellipse(cx, cy, rx, ry, angle, cw=True):
     """Ellipse with its long axis along the given angle."""
     a = math.radians(angle)
     dx, dy = rx * math.cos(a), -rx * math.sin(a)
-    arc = f"A{f(rx)},{f(ry)} {n(-angle)} 0 1"
+    arc = f"A{f(rx)},{f(ry)} {n(-angle)} 0 {1 if cw else 0}"
     return (f"M{f(cx - dx)},{f(cy - dy)}{arc} {f(cx + dx)},{f(cy + dy)}"
             f"{arc} {f(cx - dx)},{f(cy - dy)}Z")
 
@@ -223,11 +223,32 @@ def user():
     return circle(12, 8.2, 4.2) + half_disc(12, 21.4, 8.4)
 
 
+def gpu():
+    """Graphics card: the board with its fan, cooling fins and connector."""
+    return (frame(1.6, 5.0, 20.8, 12.6, 2.2) + ring(8.6, 11.3, 3.7, 1.7) + circle(8.6, 11.3, 1.1)
+            + rect(14.4, 8.2, 1.7, 6.2, 0.6) + rect(17.4, 8.2, 1.7, 6.2, 0.6)
+            + rect(5.6, 17.2, 9.0, 2.6, 0.5))
+
+
+def internet():
+    """Globe: outline, a meridian and the equator."""
+    return (ring(12, 12, 9.2, 1.9) + ellipse(12, 12, 9.2, 4.4, 90)
+            + ellipse(12, 12, 9.2 - 1.8, 4.4 - 1.8, 90, cw=False)
+            + line((3.4, 12), (20.6, 12), 1.8, caps=False))
+
+
+def latency():
+    """Stopwatch."""
+    return (ring(12, 13.6, 8.0, 1.9) + line((12, 13.6), (12, 9.4), 1.8) + circle(12, 13.6, 1.2)
+            + rect(9.8, 2.0, 4.4, 2.2, 0.7) + rect(11.1, 3.8, 1.8, 2.2)
+            + line(at(12, 13.6, 8.6, 45), at(12, 13.6, 10.2, 45), 1.9))
+
+
 CAPABILITIES = {
     "backup": backup, "clock": clock, "cpu": cpu, "disk": disk, "display": display,
     "drive": drive, "fan": fan, "health": health, "lock": lock, "memory": memory,
     "network": network, "pressure": pressure, "thermometer": thermometer,
-    "update": update, "user": user,
+    "update": update, "user": user, "gpu": gpu, "internet": internet, "latency": latency,
 }
 
 

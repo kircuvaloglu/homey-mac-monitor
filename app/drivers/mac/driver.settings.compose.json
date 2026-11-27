@@ -148,6 +148,14 @@
         "label": {
           "en": "Pending updates"
         }
+      },
+      {
+        "id": "info_agent",
+        "type": "label",
+        "value": "-",
+        "label": {
+          "en": "Agent version"
+        }
       }
     ]
   }

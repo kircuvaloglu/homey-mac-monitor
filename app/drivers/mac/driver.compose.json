@@ -26,7 +26,10 @@
     "mac_thermal_state",
     "mac_disk_health",
     "mac_last_backup",
-    "mac_drives"
+    "mac_drives",
+    "mac_gpu_usage",
+    "mac_internet",
+    "mac_internet_latency"
   ],
   "capabilitiesOptions": {
     "measure_temperature.cpu": {

@@ -582,6 +582,163 @@
           "example": "Backup"
         }
       ]
+    },
+    {
+      "id": "gpu_usage_above",
+      "title": {
+        "en": "GPU usage rises above..."
+      },
+      "titleFormatted": {
+        "en": "GPU usage rises above [[percent]] %"
+      },
+      "hint": {
+        "en": "Fires once each time the usage crosses the threshold upwards."
+      },
+      "args": [
+        {
+          "name": "percent",
+          "type": "number",
+          "min": 1,
+          "max": 100,
+          "step": 1,
+          "title": {
+            "en": "Usage"
+          },
+          "placeholder": {
+            "en": "80"
+          }
+        }
+      ],
+      "tokens": [
+        {
+          "name": "percent",
+          "type": "number",
+          "title": {
+            "en": "GPU usage (%)"
+          },
+          "example": 85
+        }
+      ]
+    },
+    {
+      "id": "internet_down",
+      "title": {
+        "en": "The internet goes down"
+      },
+      "hint": {
+        "en": "The Mac could not reach the internet in two checks in a row."
+      }
+    },
+    {
+      "id": "internet_up",
+      "title": {
+        "en": "The internet comes back"
+      }
+    },
+    {
+      "id": "latency_above",
+      "title": {
+        "en": "Internet latency rises above..."
+      },
+      "titleFormatted": {
+        "en": "Internet latency rises above [[ms]] ms"
+      },
+      "hint": {
+        "en": "Fires once each time the latency crosses the threshold upwards."
+      },
+      "args": [
+        {
+          "name": "ms",
+          "type": "number",
+          "min": 1,
+          "max": 5000,
+          "step": 1,
+          "title": {
+            "en": "Latency"
+          },
+          "placeholder": {
+            "en": "100"
+          }
+        }
+      ],
+      "tokens": [
+        {
+          "name": "ms",
+          "type": "number",
+          "title": {
+            "en": "Latency (ms)"
+          },
+          "example": 140
+        }
+      ]
+    },
+    {
+      "id": "app_started",
+      "title": {
+        "en": "An app starts"
+      },
+      "titleFormatted": {
+        "en": "[[app]] starts"
+      },
+      "hint": {
+        "en": "Works for apps and background processes, such as a media server."
+      },
+      "args": [
+        {
+          "name": "app",
+          "type": "autocomplete",
+          "title": {
+            "en": "App"
+          },
+          "placeholder": {
+            "en": "Select an app"
+          }
+        }
+      ],
+      "tokens": [
+        {
+          "name": "name",
+          "type": "string",
+          "title": {
+            "en": "App"
+          },
+          "example": "Plex Media Server"
+        }
+      ]
+    },
+    {
+      "id": "app_stopped",
+      "title": {
+        "en": "An app stops"
+      },
+      "titleFormatted": {
+        "en": "[[app]] stops"
+      },
+      "hint": {
+        "en": "Works for apps and background processes, such as a media server."
+      },
+      "args": [
+        {
+          "name": "app",
+          "type": "autocomplete",
+          "title": {
+            "en": "App"
+          },
+          "placeholder": {
+            "en": "Select an app"
+          }
+        }
+      ],
+      "tokens": [
+        {
+          "name": "name",
+          "type": "string",
+          "title": {
+            "en": "App"
+          },
+          "example": "Plex Media Server"
+        }
+      ]
     }
   ],
   "conditions": [
@@ -880,6 +1037,36 @@
           }
         }
       ]
+    },
+    {
+      "id": "gpu_usage_greater",
+      "title": {
+        "en": "GPU usage !{{is|is not}} above..."
+      },
+      "titleFormatted": {
+        "en": "GPU usage !{{is|is not}} above [[percent]] %"
+      },
+      "args": [
+        {
+          "name": "percent",
+          "type": "number",
+          "min": 1,
+          "max": 100,
+          "step": 1,
+          "title": {
+            "en": "Usage"
+          },
+          "placeholder": {
+            "en": "80"
+          }
+        }
+      ]
+    },
+    {
+      "id": "internet_is_up",
+      "title": {
+        "en": "The internet !{{is|is not}} reachable"
+      }
     }
   ],
   "actions": [

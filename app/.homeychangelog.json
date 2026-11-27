@@ -1,4 +1,7 @@
 {
+  "1.7.0": {
+    "en": "GPU usage, internet access and internet latency, each with its own Flow cards. Flows can now react when a chosen app or background process starts or stops. A Mac with both Ethernet and Wi-Fi is found again on its other address when one stops answering. The new readings need version 1.7.0 of the Mac agent."
+  },
   "1.6.0": {
     "en": "Redrawn icons that show correctly everywhere in Homey, instead of as plain blocks. A Mac that moves to another address is picked up again on its own, and adding a Mac now warns when it answers on a network your Homey cannot reach."
   },

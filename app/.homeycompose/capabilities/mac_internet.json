@@ -1,0 +1,23 @@
+{
+  "type": "boolean",
+  "title": {
+    "en": "Internet"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "titleTrue": {
+    "en": "Online"
+  },
+  "titleFalse": {
+    "en": "Offline"
+  },
+  "insights": true,
+  "insightsTitleTrue": {
+    "en": "Internet came back"
+  },
+  "insightsTitleFalse": {
+    "en": "Internet went down"
+  },
+  "icon": "/assets/capabilities/internet.svg"
+}

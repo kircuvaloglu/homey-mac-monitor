@@ -21,6 +21,8 @@ const THRESHOLD_TRIGGERS = [
   { id: 'disk_free_below', key: 'diskFree', arg: 'gigabytes', rising: false, token: 'free' },
   { id: 'disk_free_above', key: 'diskFree', arg: 'gigabytes', rising: true, token: 'free' },
   { id: 'fan_above', key: 'fanRpm', arg: 'rpm', rising: true, token: 'rpm' },
+  { id: 'gpu_usage_above', key: 'gpuUsage', arg: 'percent', rising: true, token: 'percent' },
+  { id: 'latency_above', key: 'latencyMs', arg: 'ms', rising: true, token: 'ms' },
   { id: 'idle_above', key: 'idleMinutes', arg: 'minutes', rising: true, token: 'minutes' },
   { id: 'network_down_above', key: 'downMbps', arg: 'mbps', rising: true, token: 'mbps' },
   { id: 'network_up_above', key: 'upMbps', arg: 'mbps', rising: true, token: 'mbps' },
@@ -33,6 +35,7 @@ const EVENT_TRIGGERS = [
   'user_active', 'screen_locked', 'screen_unlocked', 'display_on', 'display_off',
   'memory_pressure_changed', 'thermal_state_changed',
   'disk_failing', 'backup_finished', 'drive_connected', 'drive_disconnected',
+  'internet_down', 'internet_up',
 ];
 
 module.exports = class MacDriver extends Homey.Driver {
@@ -59,6 +62,7 @@ module.exports = class MacDriver extends Homey.Driver {
     condition('is_online', async (args) => args.device.isOnline());
     condition('cpu_temp_greater', above('measure_temperature.cpu', 'celsius'));
     condition('cpu_usage_greater', above('mac_cpu_usage', 'percent'));
+    condition('gpu_usage_greater', above('mac_gpu_usage', 'percent'));
     condition('memory_greater', above('mac_memory_usage', 'percent'));
     condition('disk_free_greater', above('mac_disk_free', 'gigabytes'));
     condition('fan_greater', above('mac_fan_rpm', 'rpm'));
@@ -67,6 +71,7 @@ module.exports = class MacDriver extends Homey.Driver {
     const is = (capability) => async (args) => args.device.getCapabilityValue(capability) === true;
     condition('screen_is_locked', is('mac_screen_locked'));
     condition('display_is_on', is('mac_display_on'));
+    condition('internet_is_up', is('mac_internet'));
     condition('idle_longer', async (args) => {
       const v = args.device.getCapabilityValue('mac_idle');
       return typeof v === 'number' && v >= args.minutes;
@@ -81,6 +86,21 @@ module.exports = class MacDriver extends Homey.Driver {
     const appRunning = this.homey.flow.getConditionCard('app_running');
     appRunning.registerRunListener(async (args) => args.device.isAppRunning(args.app.name));
     appRunning.registerArgumentAutocompleteListener('app', async (query, args) => args.device.findApps(query));
+
+    // Apps that start or stop. The agent is only asked about the apps chosen in
+    // these cards, which are read from the Flows whenever one changes.
+    this.appTriggers = {
+      started: this.homey.flow.getDeviceTriggerCard('app_started'),
+      stopped: this.homey.flow.getDeviceTriggerCard('app_stopped'),
+    };
+    for (const card of Object.values(this.appTriggers)) {
+      card.registerRunListener(async (args, state) =>
+        String(args.app.name).toLowerCase() === String(state.name).toLowerCase());
+      card.registerArgumentAutocompleteListener('app', async (query, args) => args.device.findApps(query));
+      card.on('update', () => {
+        this.getDevices().forEach((device) => device.refreshWatchList().catch(() => {}));
+      });
+    }
 
     const driveConnected = this.homey.flow.getConditionCard('drive_connected');
     driveConnected.registerRunListener(async (args) =>

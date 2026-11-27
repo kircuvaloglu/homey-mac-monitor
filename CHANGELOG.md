@@ -1,5 +1,36 @@
 # Changelog
 
+## 1.7.0
+
+### Added
+
+- GPU usage, with a threshold trigger and a condition
+- Internet access and latency, measured by the Mac, with triggers when the
+  internet goes down or comes back and when the latency rises above a value, and
+  a condition for whether the internet is reachable
+- Triggers for when a chosen app or background process starts or stops. Only
+  the apps used in these Flows are checked
+- Agent version in the device settings, and a notification when a Mac runs an
+  older agent
+
+### Fixed
+
+- A Mac with both Ethernet and Wi-Fi could stay unreachable when the address in
+  use stopped answering. The addresses of its network ports are now tried as
+  well, and the first one where the same Mac answers is kept
+
+### Agent
+
+- GPU usage from the graphics processor's own statistics
+- Internet check every 30 seconds: a TCP connection to two public DNS resolvers
+  (1.1.1.1 and 8.8.8.8) that is opened and closed again, without sending data.
+  The Mac counts as offline after two failed checks in a row. Set
+  `"internetCheck": false` in `config.json` to turn it off
+- `GET /status?watch=Name,Other` adds whether those apps or processes are running
+
+Install the new agent on each Mac with the same command as before; the existing
+token is kept.
+
 ## 1.6.0
 
 ### Fixed

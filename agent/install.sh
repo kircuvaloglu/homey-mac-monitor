@@ -86,7 +86,8 @@ else
   },
   "commands": {},
   "allowedIPs": [],
-  "advertiseBonjour": true
+  "advertiseBonjour": true,
+  "internetCheck": true
 }
 JSON
   echo "config      : created ($CONFIG)"

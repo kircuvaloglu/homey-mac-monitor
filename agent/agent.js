@@ -9,13 +9,14 @@
  */
 
 const http = require('http');
+const net = require('net');
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { execFile, spawn } = require('child_process');
 
-const AGENT_VERSION = '1.5.0';
+const AGENT_VERSION = '1.7.0';
 const CONFIG_PATH = process.env.HOMEY_MAC_AGENT_CONFIG || '/usr/local/etc/homey-mac-agent/config.json';
 const HERE = __dirname;
 
@@ -41,7 +42,9 @@ const DEFAULTS = {
   commands: {},
   // Empty allows all private networks; otherwise only these addresses.
   allowedIPs: [],
-  advertiseBonjour: true
+  advertiseBonjour: true,
+  // Checks every 30 seconds whether the Mac can reach the internet.
+  internetCheck: true
 };
 
 function loadConfig() {
@@ -241,6 +244,13 @@ async function readTopProcesses() {
     .filter((p) => Number.isFinite(p.cpu));
 }
 
+// Apple silicon reports the GPU load in the performance statistics of the accelerator.
+async function readGpuUsage() {
+  const out = await sh('/usr/sbin/ioreg', ['-r', '-d', '1', '-c', 'IOAccelerator'], 4000);
+  const m = out && out.match(/"Device Utilization %"\s*=\s*(\d+)/);
+  return m ? Math.min(100, parseInt(m[1], 10)) : null;
+}
+
 async function readIdleSeconds() {
   const out = await sh('/usr/sbin/ioreg', ['-c', 'IOHIDSystem', '-d', '4'], 4000);
   const m = out && out.match(/"HIDIdleTime" = (\d+)/);
@@ -345,6 +355,47 @@ async function listProcesses() {
   return { apps: sort(apps), processes: sort(processes) };
 }
 
+// Answers which of the given app or process names are running. Names are only
+// compared with the process list, never passed to a shell.
+async function watchedApps(names) {
+  const { apps, processes } = await listProcesses();
+  const running = new Set([...apps, ...processes].map((n) => n.toLowerCase()));
+  return Object.fromEntries(names.map((n) => [n, running.has(n.toLowerCase())]));
+}
+
+// Internet access is checked by opening a TCP connection to two public DNS
+// resolvers and closing it again; nothing is sent. The Mac counts as offline
+// after two failed checks in a row, so a single dropped packet is not reported.
+const INTERNET_TARGETS = [['1.1.1.1', 443], ['8.8.8.8', 443]];
+let internet = { online: null, latencyMs: null, checkedAt: null };
+let internetFailures = 0;
+
+function tcpLatency(host, port, timeoutMs = 3000) {
+  return new Promise((resolve) => {
+    const started = process.hrtime.bigint();
+    const socket = net.connect({ host, port, timeout: timeoutMs });
+    const done = (value) => {
+      socket.destroy();
+      resolve(value);
+    };
+    socket.once('connect', () => done(Number(process.hrtime.bigint() - started) / 1e6));
+    socket.once('timeout', () => done(null));
+    socket.once('error', () => done(null));
+  });
+}
+
+async function checkInternet() {
+  const results = (await Promise.all(INTERNET_TARGETS.map(([h, p]) => tcpLatency(h, p))))
+    .filter((v) => v !== null);
+  internetFailures = results.length ? 0 : internetFailures + 1;
+  internet = {
+    online: results.length > 0 ? true : internetFailures >= 2 ? false : internet.online,
+    latencyMs: results.length ? round(Math.min(...results), 0) : null,
+    checkedAt: new Date().toISOString()
+  };
+  return internet;
+}
+
 // Static system info, refreshed at startup and with each update check.
 let staticInfo = null;
 async function readStaticInfo() {
@@ -429,7 +480,7 @@ async function checkUpdates() {
 let snapshot = { ready: false };
 
 async function refreshSnapshot() {
-  const [sensors, memory, disks, battery, thermal, top, primaryIface, idle, locked, session, netRate, pressure] =
+  const [sensors, memory, disks, battery, thermal, top, primaryIface, idle, locked, session, netRate, pressure, gpuUsage] =
     await Promise.all([
       readSensors(),
       readMemory(),
@@ -442,7 +493,8 @@ async function refreshSnapshot() {
       readScreenLocked(),
       readSession(),
       readNetworkRate(),
-      readMemoryPressure()
+      readMemoryPressure(),
+      readGpuUsage()
     ]);
 
   const interfaces = readNetwork();
@@ -462,7 +514,7 @@ async function refreshSnapshot() {
       temperature: sensors.ok ? sensors.cpu ?? null : null,
       temperatureMax: sensors.ok ? sensors.cpuMax ?? null : null
     },
-    gpu: { temperature: sensors.ok ? sensors.gpu ?? null : null },
+    gpu: { temperature: sensors.ok ? sensors.gpu ?? null : null, usagePercent: gpuUsage },
     thermal: {
       ...(thermal || {}),
       fanRpm: sensors.ok ? sensors.fanRpm ?? null : null,
@@ -651,7 +703,13 @@ const server = http.createServer(async (req, res) => {
       // checkUpdates replaces updateCache, so point the snapshot at the new object.
       snapshot.updates = updateCache;
     }
-    return send(res, 200, snapshot);
+    // ?watch=Name,Other adds whether those apps or processes are running.
+    const watch = (url.searchParams.get('watch') || '').split(',')
+      .map((n) => n.trim()).filter((n) => n && n.length <= 120).slice(0, 30);
+    // The internet check runs on its own schedule, so the latest result is added here.
+    const body = { ...snapshot, internet: config.internetCheck ? internet : null };
+    if (watch.length) body.watched = await watchedApps(watch);
+    return send(res, 200, body);
   }
 
   if (url.pathname === '/processes' && req.method === 'GET') {
@@ -718,6 +776,11 @@ async function main() {
 
   readSlowInfo().catch(() => {});
   setInterval(() => readSlowInfo().catch(() => {}), 10 * 60 * 1000);
+
+  if (config.internetCheck) {
+    checkInternet().catch(() => {});
+    setInterval(() => checkInternet().catch(() => {}), 30 * 1000);
+  }
 
   // Delay the first update check so startup stays fast.
   setTimeout(() => checkUpdates().catch(() => {}), 60000);

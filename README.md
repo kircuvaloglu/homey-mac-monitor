@@ -58,6 +58,9 @@ sudo cat /usr/local/etc/homey-mac-agent/config.json
 
 The agent starts automatically when the Mac starts, even before anyone logs in.
 
+To update the agent later, run the same command again. The token and settings
+are kept, so nothing changes in Homey.
+
 ## 2. Add the Mac in Homey
 
 1. Install **Mac Monitor** from the Homey App Store.
@@ -72,11 +75,11 @@ network as your Homey.
 
 ### Readings
 
-- **Hardware:** CPU and GPU temperature, CPU usage, load per core, memory usage
+- **Hardware:** CPU and GPU temperature, CPU and GPU usage, load per core, memory usage
   and pressure, free disk space, disk usage, disk health (SMART), fan speed,
   power draw, thermal state and throttling
 - **Activity:** idle time, screen lock, display on or off
-- **Network:** download and upload speed
+- **Network:** download and upload speed, internet access and latency
 - **System:** uptime, pending macOS updates, last Time Machine backup, number of
   external drives
 
@@ -84,14 +87,22 @@ Values that a Mac does not report (for example fan speed on a fanless Mac) are
 not shown. Insights history is kept for the numeric values and on/off states.
 
 The device settings also show model, serial number, macOS version, processor,
-memory, IP address, MAC address, boot time and the last update check.
+memory, IP address, MAC address, boot time, the last update check and the agent
+version.
+
+The internet check opens a connection to two public DNS resolvers (1.1.1.1 and
+8.8.8.8) every 30 seconds and closes it again without sending anything. The Mac
+counts as offline after two failed checks in a row. To turn the check off, set
+`"internetCheck": false` in the agent's `config.json`.
 
 ### Flow cards
 
 **When**
 
-- CPU usage, memory usage, free disk space, fan speed, download or upload speed
-  crosses a value
+- CPU usage, GPU usage, memory usage, free disk space, fan speed, download or
+  upload speed, internet latency crosses a value
+- The internet goes down or comes back
+- A chosen app or background process starts or stops
 - The Mac has been idle for a number of minutes, or someone starts using it again
 - The screen is locked or unlocked, the display turns on or off
 - Memory pressure or thermal state changes, the disk reports a health problem
@@ -106,8 +117,9 @@ the thermal throttling alarm.
 **And**
 
 - The Mac is reachable
-- CPU temperature, CPU usage, memory usage, free disk space, fan speed or power
-  draw is above a value
+- CPU temperature, CPU usage, GPU usage, memory usage, free disk space, fan
+  speed or power draw is above a value
+- The internet is reachable
 - The Mac has been idle for a number of minutes
 - The screen is locked, the display is on
 - An app is running, a drive is connected
@@ -123,7 +135,8 @@ speak text, run a command, refresh the readings, check for macOS updates,
 restart, shut down.
 
 Threshold cards fire once when the value crosses the threshold, not on every
-update while it stays there. Values are refreshed every 30 seconds by default;
+update while it stays there. For the app cards, the agent is only asked about
+the apps chosen in those Flows. Values are refreshed every 30 seconds by default;
 lower the refresh interval in the device settings for faster idle and lock
 updates.
 
@@ -202,6 +215,8 @@ Without `--purge` the config and token are kept for a later reinstall.
   sudo /usr/libexec/ApplicationFirewall/socketfilterfw --unblockapp "$N"
   sudo launchctl kickstart -k system/com.homey.macagent
   ```
+- **A Mac on both Ethernet and Wi-Fi.** Homey keeps using the address that
+  answers. If one connection goes away, the Mac is found again on the other one.
 - **"The Mac is not responding".** The Mac is asleep, shut down or the agent is
   not running. Check with `curl http://127.0.0.1:8787/ping` on the Mac.
 - **No temperature or fan data.** Reinstall the agent; the log is in
@@ -215,6 +230,7 @@ Without `--purge` the config and token are kept for a later reinstall.
 GET  /ping                      no token; returns the service name and Mac name
 GET  /status                    all readings (token required)
 GET  /status?updates=refresh    runs a macOS update check first
+GET  /status?watch=Name,Other   adds whether those apps or processes are running
 GET  /processes                 running apps and processes (token required)
 POST /action  {"action":"...", "params":{}}
 ```

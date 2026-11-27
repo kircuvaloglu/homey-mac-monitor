@@ -7,7 +7,8 @@
   "device": {
     "unreachable": "The Mac is not responding. Is it asleep, or is the agent stopped?",
     "asleep": "The Mac is asleep.",
-    "otherMac": "Another Mac is answering at this address. Repair the device to point it at the right Mac, or add the other Mac as its own device."
+    "otherMac": "Another Mac is answering at this address. Repair the device to point it at the right Mac, or add the other Mac as its own device.",
+    "agentOutdated": "**__name__** runs version __version__ of the Mac agent. Install version __latest__ on that Mac for GPU usage, the internet check and app watching."
   },
   "pair": {
     "intro": "Install the Mac Monitor agent on your Mac first. The installer prints the access token you enter below.",
