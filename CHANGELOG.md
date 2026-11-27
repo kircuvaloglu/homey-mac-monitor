@@ -1,5 +1,14 @@
 # Changelog
 
+## Agent 1.7.1
+
+- The agent could stop right after the Mac started, or skip a reading, when the
+  sensor reader did not answer in time. The reading now continues without the
+  sensor values, and a failed first reading no longer stops the agent
+
+The Homey app is unchanged. Install the new agent with the same command as
+before; the token is kept.
+
 ## 1.7.0
 
 ### Added

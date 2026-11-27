@@ -16,7 +16,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { execFile, spawn } = require('child_process');
 
-const AGENT_VERSION = '1.7.0';
+const AGENT_VERSION = '1.7.1';
 const CONFIG_PATH = process.env.HOMEY_MAC_AGENT_CONFIG || '/usr/local/etc/homey-mac-agent/config.json';
 const HERE = __dirname;
 
@@ -103,8 +103,12 @@ async function readSensors() {
   const bin = path.join(HERE, 'macsensors');
   if (!fs.existsSync(bin)) return { ok: false, error: 'macsensors not found' };
   const out = await sh(bin, [], 5000);
+  // Right after startup the SMC can be slow to answer, and macsensors then
+  // returns nothing at all. JSON.parse(null) does not throw, so check the result.
+  if (!out) return { ok: false, error: 'macsensors did not answer' };
   try {
-    return JSON.parse(out);
+    const data = JSON.parse(out);
+    return data && typeof data === 'object' ? data : { ok: false, error: 'unexpected macsensors output' };
   } catch {
     return { ok: false, error: 'could not parse macsensors output' };
   }
@@ -768,7 +772,8 @@ async function main() {
     process.exit(1);
   }
   await readStaticInfo();
-  await refreshSnapshot();
+  // A failed first reading must not stop the agent; the next round tries again.
+  await refreshSnapshot().catch((e) => log('first snapshot failed: ' + e.message));
   cpuUsagePercent(); // first sample
 
   setInterval(() => refreshSnapshot().catch((e) => log('snapshot failed: ' + e.message)),
