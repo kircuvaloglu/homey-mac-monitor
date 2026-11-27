@@ -162,7 +162,10 @@ Points from the first review, worth keeping in mind for every release:
   device on white. Illustrations are rejected. Images must not show Homey
   devices or logos.
 - Widget previews are simple shapes on a transparent background, without text.
-- Icons are line drawings without gradients.
+- Icons are line drawings without gradients. The app and driver icons show the
+  device at an angle, preferably from the right, never straight from the front,
+  and use the full 960 x 960 canvas. The app icon must differ from the driver
+  icon.
 
 **Icons**
 

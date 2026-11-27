@@ -13,6 +13,11 @@
 - Agent version in the device settings, and a notification when a Mac runs an
   older agent
 
+### Changed
+
+- The app and driver icons show the Mac mini from the front right and slightly
+  above again, as a line drawing, instead of from the front
+
 ### Fixed
 
 - A Mac with both Ethernet and Wi-Fi could stay unreachable when the address in

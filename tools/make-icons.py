@@ -253,22 +253,115 @@ CAPABILITIES = {
 
 
 # --- app and driver icon ---------------------------------------------------
+#
+# Homey wants device icons as line drawings seen from an angle, preferably from
+# the right, so the Mac mini is modelled in 3D and projected. Its outlines are
+# filled bands of an even width, like the capability icons.
 
-def mac_mini(y, height=8.8):
-    """Mac mini seen from the front: the case, the two front ports and the headphone jack."""
-    middle = y + height / 2
-    return (frame(1.8, y, 20.4, height, 2.6)
-            + rect(5.6, middle - 0.7, 3.4, 1.4, 0.7) + rect(10.0, middle - 0.7, 3.4, 1.4, 0.7)
-            + circle(16.4, middle, 1.0))
+MINI_HEIGHT = 0.394     # 5.0 cm tall on a 12.7 cm square footprint
+MINI_RADIUS = 0.17      # corner radius, relative to the width
+YAW, PITCH = 30, 33     # turned to show the right side, seen from slightly above
+LINE = 34               # line width on the 960 x 960 canvas
+
+
+def project(x, y, z):
+    """Device coordinates (x to the right, y to the back, z up) to the drawing plane."""
+    a, b = math.radians(YAW), math.radians(PITCH)
+    across = x * math.cos(a) + y * math.sin(a)
+    depth = -x * math.sin(a) + y * math.cos(a)
+    return across, -(z * math.cos(b) + depth * math.sin(b))
+
+
+def rounded_square(r, steps=12):
+    """Outline of the unit square with rounded corners."""
+    pts = []
+    for cx, cy, a0 in [(1 - r, r, -90), (1 - r, 1 - r, 0), (r, 1 - r, 90), (r, r, 180)]:
+        for k in range(steps + 1):
+            a = math.radians(a0 + 90 * k / steps)
+            pts.append((cx + r * math.cos(a), cy + r * math.sin(a)))
+    return pts
+
+
+def hull(points):
+    """Convex hull, used for the outline of the whole device."""
+    pts = sorted(set((round(x, 5), round(y, 5)) for x, y in points))
+
+    def cross(o, a, b):
+        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+
+    lower, upper = [], []
+    for q in pts:
+        while len(lower) >= 2 and cross(lower[-2], lower[-1], q) <= 0:
+            lower.pop()
+        lower.append(q)
+    for q in reversed(pts):
+        while len(upper) >= 2 and cross(upper[-2], upper[-1], q) <= 0:
+            upper.pop()
+        upper.append(q)
+    return lower[:-1] + upper[:-1]
+
+
+def band(points, t):
+    """Closed convex outline drawn as a line of width t."""
+    pts = list(points) if clockwise(list(points)) else list(points)[::-1]
+    outer, inner = [], []
+    for i, q in enumerate(pts):
+        normals = []
+        for a, b in ((pts[i - 1], q), (q, pts[(i + 1) % len(pts)])):
+            dx, dy = b[0] - a[0], b[1] - a[1]
+            length = math.hypot(dx, dy) or 1
+            normals.append((dy / length, -dx / length))
+        mx, my = normals[0][0] + normals[1][0], normals[0][1] + normals[1][1]
+        length = math.hypot(mx, my) or 1
+        mx, my = mx / length, my / length
+        d = (t / 2) / max(mx * normals[0][0] + my * normals[0][1], 0.3)
+        outer.append((q[0] + mx * d, q[1] + my * d))
+        inner.append((q[0] - mx * d, q[1] - my * d))
+    return poly(outer) + poly(inner, cw=False)
+
+
+def mac_mini(box):
+    """The Mac mini fitted into box (x0, y0, x1, y1) on the 960 canvas."""
+    loop = rounded_square(MINI_RADIUS)
+    top = [project(x, y, MINI_HEIGHT) for x, y in loop]
+    outline = hull(top + [project(x, y, 0) for x, y in loop])
+
+    def front(xc, zc, half, r):
+        """Upright rounded slot on the front face; with half = 0 a round opening."""
+        upper = [(xc + r * math.cos(math.radians(a)), zc + half + r * math.sin(math.radians(a)))
+                 for a in range(0, 181, 15)]
+        lower = [(xc + r * math.cos(math.radians(a)), zc - half + r * math.sin(math.radians(a)))
+                 for a in range(180, 361, 15)]
+        return [project(x, 0, z) for x, z in upper + lower]
+
+    # Front of the M4 Mac mini: two upright USB-C ports on the left, the
+    # headphone jack on the right.
+    z = MINI_HEIGHT * 0.5
+    openings = [front(0.23, z, 0.036, 0.028), front(0.325, z, 0.036, 0.028), front(0.78, z, 0, 0.034)]
+
+    # The rounded corner between the front and the right side, drawn as an edge.
+    a = math.radians(-45)
+    cx, cy = 1 - MINI_RADIUS + MINI_RADIUS * math.cos(a), MINI_RADIUS + MINI_RADIUS * math.sin(a)
+    edge = (project(cx, cy, 0), project(cx, cy, MINI_HEIGHT))
+
+    xs, ys = [q[0] for q in outline], [q[1] for q in outline]
+    scale = min((box[2] - box[0]) / (max(xs) - min(xs)), (box[3] - box[1]) / (max(ys) - min(ys)))
+    ox = (box[0] + box[2]) / 2 - scale * (min(xs) + max(xs)) / 2
+    oy = (box[1] + box[3]) / 2 - scale * (min(ys) + max(ys)) / 2
+    fit = lambda pts: [(ox + scale * x, oy + scale * y) for x, y in pts]
+    edge = fit(edge)
+    return (band(fit(outline), LINE) + band(fit(top), LINE) + line(edge[0], edge[1], LINE, caps=False)
+            + "".join(poly(fit(o)) for o in openings))
 
 
 def app_icon():
-    return (chain([(3.0, 6.6), (7.2, 6.6), (9.0, 2.6), (12.0, 10.4), (13.8, 6.6), (21.0, 6.6)], 1.9)
-            + mac_mini(12.6))
+    """The Mac mini with a pulse line above it, so it differs from the driver icon."""
+    pulse = [(80, 205), (330, 205), (395, 85), (475, 330), (545, 160), (595, 205), (880, 205)]
+    return chain(pulse, LINE) + mac_mini((110, 390, 850, 905))
 
 
 def driver_icon():
-    return mac_mini(7.6)
+    return mac_mini((40, 150, 920, 810))
 
 
 # --- writing ---------------------------------------------------------------
@@ -299,7 +392,7 @@ def main():
         SCALE = 1.0
         write(os.path.join(root, "assets", "capabilities", f"{name}.svg"), svg(draw()))
 
-    SCALE = 40.0
+    SCALE = 1.0  # the app and driver icon are drawn in pixels of the 960 canvas
     write(os.path.join(root, "assets", "icon.svg"), svg(app_icon(), 960))
     write(os.path.join(root, "drivers", "mac", "assets", "icon.svg"), svg(driver_icon(), 960))
 
